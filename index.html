@@ -7,25 +7,24 @@
   <title>Ungrateful Dog Lab.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Inter:wght@300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-dark: #0c0b0a;
-      --bg-light: #ffffff;
+      --white:  #ffffff;
       --accent: #a7e8f6;
-      --text-dark: #42403d;
-      --muted: rgba(66,64,61,0.36);
-      --border: rgba(66,64,61,0.1);
+      --dark:   #42403d;
+      --muted:  rgba(66,64,61,0.38);
+      --border: rgba(66,64,61,0.12);
     }
 
     html, body { height: 100%; }
 
     body {
       font-family: 'Cormorant Garamond', Georgia, serif;
-      background: var(--bg-light);
-      color: var(--text-dark);
+      background: var(--white);
+      color: var(--dark);
       font-weight: 300;
       -webkit-font-smoothing: antialiased;
       display: flex;
@@ -41,7 +40,7 @@
       justify-content: center;
       min-height: 100svh;
       overflow: hidden;
-      background: var(--bg-dark);
+      background: var(--white);
     }
 
     #signal-canvas {
@@ -60,12 +59,11 @@
       letter-spacing: 0.28em;
       text-transform: uppercase;
       white-space: nowrap;
-      color: #ffffff;
-      /* Dark halo so text sits above waveforms */
+      color: var(--dark);
       text-shadow:
-        0 0 60px var(--bg-dark),
-        0 0 30px var(--bg-dark),
-        0 0 12px var(--bg-dark);
+        0 0 24px var(--white),
+        0 0 48px var(--white),
+        0 0 72px var(--white);
       opacity: 0;
       animation: up 1.4s cubic-bezier(0.22,1,0.36,1) forwards 0.3s;
     }
@@ -73,60 +71,57 @@
     /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 2.75rem 2.5rem;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: end;
+      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       gap: 2rem;
+      text-align: center;
     }
-
-    .footer-identity { display: flex; flex-direction: column; gap: 0.3rem; }
 
     .footer-name {
-      font-size: 1.125rem;
+      font-size: 1rem;
       font-weight: 300;
-      letter-spacing: 0.04em;
-      color: var(--text-dark);
-    }
-
-    .footer-meta {
-      font-family: 'Inter', sans-serif;
-      font-size: 0.625rem;
-      font-weight: 300;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      letter-spacing: 0.06em;
       color: var(--muted);
     }
 
-    .footer-links { display: flex; gap: 1.5rem; align-items: center; }
+    .footer-links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
     .footer-link {
-      font-size: 0.875rem;
-      font-weight: 300;
-      font-style: italic;
-      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.875rem 2rem;
+      min-width: 140px;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: var(--dark);
       text-decoration: none;
-      letter-spacing: 0.04em;
-      transition: color 0.2s;
-      position: relative;
+      border: 1.5px solid var(--dark);
+      transition: background 0.22s ease, border-color 0.22s ease, color 0.22s ease;
     }
-    .footer-link::after {
-      content: '';
-      position: absolute;
-      bottom: -2px; left: 0; right: 0;
-      height: 1px;
+    .footer-link:hover,
+    .footer-link:active {
       background: var(--accent);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.25s ease;
+      border-color: var(--accent);
     }
-    .footer-link:hover { color: var(--text-dark); }
-    .footer-link:hover::after { transform: scaleX(1); }
+    .footer-link svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
 
     .footer-copy {
-      grid-column: 1 / -1;
-      border-top: 1px solid var(--border);
-      padding-top: 1.5rem;
       font-family: 'Inter', sans-serif;
       font-size: 0.5625rem;
       font-weight: 300;
@@ -137,9 +132,9 @@
 
     @keyframes up { to { opacity: 1; transform: none; } }
 
-    @media (max-width: 520px) {
+    @media (max-width: 480px) {
       .hero-title { letter-spacing: 0.14em; white-space: normal; text-align: center; line-height: 1.3; }
-      footer { grid-template-columns: 1fr; align-items: start; padding: 2rem 1.5rem; }
+      .footer-link { min-width: 130px; padding: 0.875rem 1.5rem; }
     }
   </style>
 </head>
@@ -151,13 +146,16 @@
   </section>
 
   <footer>
-    <div class="footer-identity">
-      <span class="footer-name">Shinichi Arita</span>
-      <span class="footer-meta">ex:Beerbear &nbsp;/&nbsp; DJ &nbsp;/&nbsp; Dev</span>
-    </div>
+    <p class="footer-name">Shinichi Arita</p>
     <nav class="footer-links">
-      <a href="https://x.com/Beerbear_A" class="footer-link" target="_blank" rel="noopener noreferrer">X</a>
-      <a href="https://note.com/beerbear_a" class="footer-link" target="_blank" rel="noopener noreferrer">Note</a>
+      <a href="https://x.com/Beerbear_A" class="footer-link" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        X (Twitter)
+      </a>
+      <a href="https://note.com/beerbear_a" class="footer-link" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v16l4-4h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 12H7v-2h5v2zm5-4H7V9h10v2z"/></svg>
+        Note
+      </a>
     </nav>
     <p class="footer-copy">&copy; 2025 Ungrateful Dog Lab.</p>
   </footer>
@@ -166,72 +164,73 @@
     const canvas = document.getElementById('signal-canvas');
     const ctx    = canvas.getContext('2d');
 
-    const BG = '#0c0b0a';
-
     let W, H;
     function resize() {
       W = canvas.width  = canvas.offsetWidth;
       H = canvas.height = canvas.offsetHeight;
+      buildLines();
     }
     window.addEventListener('resize', resize);
-    resize();
 
     // ── Waveform shape ───────────────────────────────────────────────
-    // Superposition of inharmonic partials, rectified and sharpened —
-    // mimics the aperiodic, spiky character of pulsar radio data.
     function pulse(phase) {
       const raw =
-        Math.sin(phase)         * 0.54 +
-        Math.sin(phase * 2.17)  * 0.24 +
-        Math.sin(phase * 3.83)  * 0.13 +
-        Math.sin(phase * 7.11)  * 0.06 +
-        Math.sin(phase * 11.3)  * 0.03;
-      // Rectify then sharpen: suppresses baseline noise, sharpens peaks
+        Math.sin(phase)        * 0.54 +
+        Math.sin(phase * 2.17) * 0.24 +
+        Math.sin(phase * 3.83) * 0.13 +
+        Math.sin(phase * 7.11) * 0.06 +
+        Math.sin(phase * 11.3) * 0.03;
       return Math.pow(Math.max(0, raw), 2.2);
     }
 
-    // ── Stack parameters ─────────────────────────────────────────────
+    // ── Per-line randomised parameters ──────────────────────────────
     const LINES = 40;
+    let lines = [];
+
+    function buildLines() {
+      lines = [];
+      const totalH  = H * (BOTTOM_FRAC - TOP_FRAC);
+      const spacing = totalH / (LINES - 1);
+      for (let i = 0; i < LINES; i++) {
+        const progress = i / (LINES - 1);
+        const env = Math.exp(-Math.pow((progress - 0.65) / 0.28, 2) * 2.8);
+        lines.push({
+          baseY:   H * TOP_FRAC + i * spacing,
+          env,
+          maxAmp:  spacing * 5.5 * env,
+          seed:    i * 83.17 + Math.random() * 10,
+          speed:   0.03 + Math.random() * 0.08,   // each line drifts at own speed
+          freqMod: 0.95 + Math.random() * 0.12,   // slight freq variation
+          // Accent or dark line — denser accent toward peaks
+          isAccent: Math.random() < 0.55 + env * 0.35,
+        });
+      }
+    }
+
     const TOP_FRAC    = 0.06;
     const BOTTOM_FRAC = 0.94;
 
+    buildLines();  // initial build (W/H may be 0 yet, will rebuild on resize)
+    resize();
+
+    // ── Draw ─────────────────────────────────────────────────────────
     function draw(t) {
       const sec = t / 1000;
 
-      // Dark background
-      ctx.fillStyle = BG;
+      ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, W, H);
 
-      const totalH  = H * (BOTTOM_FRAC - TOP_FRAC);
-      const spacing = totalH / (LINES - 1);
-
-      for (let i = 0; i < LINES; i++) {
-        const baseY    = H * TOP_FRAC + i * spacing;
-        const progress = i / (LINES - 1);          // 0 = top, 1 = bottom
-
-        // Bell-curve amplitude envelope, peak at 65% down the stack
-        const env = Math.exp(-Math.pow((progress - 0.65) / 0.28, 2) * 2.8);
-        const maxAmp = spacing * 5.5 * env;
-
-        // Unique phase seed per line; very slow drift for life
-        const seed = i * 83.17;
-        const drift = sec * 0.055;
-
-        // Sample waveform across full width (2 px steps → performance)
+      for (const ln of lines) {
         const STEP = 2;
         const pts  = [];
         for (let x = 0; x <= W; x += STEP) {
-          const phase = (x / W) * Math.PI * 20 + seed + drift;
-          pts.push([x, baseY - pulse(phase) * maxAmp]);
+          const phase = (x / W) * Math.PI * 20 * ln.freqMod + ln.seed + sec * ln.speed;
+          pts.push([x, ln.baseY - pulse(phase) * ln.maxAmp]);
         }
-        // Ensure we end exactly at W
-        const last = pts[pts.length - 1];
-        if (last[0] < W) pts.push([W, baseY]);
+        if (pts[pts.length - 1][0] < W) pts.push([W, ln.baseY]);
 
-        // ── Fill below waveform with bg colour ──────────────────────
-        // This is the core of the "stacking" illusion: each line's body
-        // occludes lines drawn earlier, so lower lines appear in front.
-        ctx.fillStyle = BG;
+        // Fill below line with white → occlusion / stacking illusion
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.moveTo(pts[0][0], pts[0][1]);
         for (const [x, y] of pts) ctx.lineTo(x, y);
@@ -240,11 +239,15 @@
         ctx.closePath();
         ctx.fill();
 
-        // ── Stroke the waveform line ────────────────────────────────
-        const alpha = 0.28 + env * 0.68;  // brighter where envelope peaks
-        ctx.strokeStyle = `rgba(167,232,246,${alpha})`;
-        ctx.lineWidth   = 0.9;
-        ctx.lineJoin    = 'round';
+        // Stroke
+        const alpha = 0.22 + ln.env * 0.72;
+        if (ln.isAccent) {
+          ctx.strokeStyle = `rgba(167,232,246,${alpha})`;
+        } else {
+          ctx.strokeStyle = `rgba(66,64,61,${alpha * 0.55})`;
+        }
+        ctx.lineWidth = 0.85;
+        ctx.lineJoin  = 'round';
         ctx.beginPath();
         ctx.moveTo(pts[0][0], pts[0][1]);
         for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]);
@@ -252,10 +255,7 @@
       }
     }
 
-    function loop(t) {
-      draw(t);
-      requestAnimationFrame(loop);
-    }
+    function loop(t) { draw(t); requestAnimationFrame(loop); }
     requestAnimationFrame(loop);
   </script>
 
