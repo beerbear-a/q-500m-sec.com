@@ -31,7 +31,6 @@
       flex-direction: column;
     }
 
-    /* ── Hero ── */
     #hero {
       flex: 1;
       position: relative;
@@ -42,7 +41,7 @@
       overflow: hidden;
     }
 
-    #noise-canvas {
+    #signal-canvas {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -58,13 +57,11 @@
       letter-spacing: 0.22em;
       text-transform: uppercase;
       white-space: nowrap;
-      line-height: 1;
       color: var(--text);
       opacity: 0;
       animation: up 1.2s cubic-bezier(0.22,1,0.36,1) forwards 0.2s;
     }
 
-    /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
       padding: 2.75rem 2.5rem;
@@ -74,11 +71,7 @@
       gap: 2rem;
     }
 
-    .footer-identity {
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
+    .footer-identity { display: flex; flex-direction: column; gap: 0.3rem; }
 
     .footer-name {
       font-size: 1.125rem;
@@ -96,11 +89,7 @@
       color: var(--muted);
     }
 
-    .footer-links {
-      display: flex;
-      gap: 1.5rem;
-      align-items: center;
-    }
+    .footer-links { display: flex; gap: 1.5rem; align-items: center; }
 
     .footer-link {
       font-size: 0.875rem;
@@ -148,7 +137,7 @@
 <body>
 
   <section id="hero">
-    <canvas id="noise-canvas" aria-hidden="true"></canvas>
+    <canvas id="signal-canvas" aria-hidden="true"></canvas>
     <h1 class="hero-title">Ungrateful Dog Lab.</h1>
   </section>
 
@@ -165,103 +154,125 @@
   </footer>
 
   <script>
-    const canvas = document.getElementById('noise-canvas');
+    const canvas = document.getElementById('signal-canvas');
     const ctx    = canvas.getContext('2d');
 
+    // Colour tokens (rgb arrays)
     const ACCENT = [167, 232, 246];
     const DARK   = [66,  64,  61];
 
+    let W, H;
     function resize() {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      W = canvas.width  = canvas.offsetWidth;
+      H = canvas.height = canvas.offsetHeight;
     }
     window.addEventListener('resize', resize);
     resize();
 
-    // ── Particles ──────────────────────────────
-    // Each particle spawns randomly but avoids a
-    // circular dead-zone around the canvas center.
-
-    const MAX     = 55;
-    const SAFE_R  = 0.22; // fraction of min(w,h) kept clear around center
-
-    let particles = [];
-
-    function safeSpawn() {
-      const cx = canvas.width  / 2;
-      const cy = canvas.height / 2;
-      const r  = Math.min(canvas.width, canvas.height) * SAFE_R;
-
-      let x, y, attempts = 0;
-      do {
-        x = Math.random() * canvas.width;
-        y = Math.random() * canvas.height;
-        attempts++;
-      } while (Math.hypot(x - cx, y - cy) < r && attempts < 30);
-
-      const size       = Math.random() < 0.6 ? 2 : Math.random() < 0.5 ? 3 : 1;
-      const useAccent  = Math.random() < 0.62;
-      const maxOpacity = Math.random() * 0.55 + 0.12;
-      const ttl        = Math.random() * 90 + 30; // frames alive
-
-      return { x: Math.floor(x), y: Math.floor(y), size, useAccent, maxOpacity, age: 0, ttl };
+    // ── Complex audio-signal waveform ───────────────────────────────
+    // Superposition of harmonics, like a real synthesised audio signal.
+    function signal(phase) {
+      return (
+        Math.sin(phase)            * 0.50 +
+        Math.sin(phase * 2 + 0.8) * 0.20 +
+        Math.sin(phase * 3 - 0.3) * 0.12 +
+        Math.sin(phase * 5 + 1.1) * 0.06 +
+        Math.sin(phase * 7 - 0.6) * 0.03
+      );
     }
 
-    function tickParticles() {
-      // age existing
-      particles = particles.filter(p => p.age < p.ttl);
-      particles.forEach(p => p.age++);
+    // ── Wave definitions ─────────────────────────────────────────────
+    // Two waves: one below center (main, accent), one above (ghost, dark)
+    const waves = [
+      // Main wave — accent colour, below centre
+      {
+        yFrac:  0.68,
+        ampFrac: 0.055,   // amplitude as fraction of H
+        freqX:  0.022,    // spatial frequency (cycles per px)
+        speed:  0.38,     // phase advance per second
+        rgb:    ACCENT,
+        alpha:  0.48,
+        width:  1.0,
+      },
+      // Ghost wave — dark colour, above centre
+      {
+        yFrac:  0.30,
+        ampFrac: 0.028,
+        freqX:  0.014,
+        speed:  0.22,
+        rgb:    DARK,
+        alpha:  0.10,
+        width:  0.75,
+      },
+    ];
 
-      // spawn new ones randomly
-      if (particles.length < MAX && Math.random() < 0.35) {
-        particles.push(safeSpawn());
-      }
+    // ── Beat markers (vertical tick lines) ──────────────────────────
+    // Occasional thin vertical lines, like bar markers in a DAW timeline.
+    const markers = [];
+    let nextMarker = 0;
+
+    function spawnMarker(t) {
+      const x = Math.random() * W;
+      const useAccent = Math.random() < 0.6;
+      markers.push({ x, born: t, life: 1.4, rgb: useAccent ? ACCENT : DARK });
     }
 
-    function easeInOut(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+    // ── Draw ─────────────────────────────────────────────────────────
+    function draw(t) {
+      const sec = t / 1000;
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, W, H);
 
-      particles.forEach(p => {
-        const progress = p.age / p.ttl;
-        // fade in first 20%, hold, fade out last 20%
-        let a;
-        if      (progress < 0.2) a = easeInOut(progress / 0.2);
-        else if (progress > 0.8) a = easeInOut((1 - progress) / 0.2);
-        else                      a = 1;
+      // Waveforms
+      waves.forEach(w => {
+        const cy  = H * w.yFrac;
+        const amp = H * w.ampFrac;
+        // Slow amplitude "breath" — makes it feel alive
+        const breath = 0.82 + 0.18 * Math.sin(sec * 0.4 + w.yFrac * 10);
 
-        const [r, g, b] = p.useAccent ? ACCENT : DARK;
-        ctx.fillStyle = `rgba(${r},${g},${b},${p.maxOpacity * a})`;
-        ctx.fillRect(p.x, p.y, p.size, p.size);
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(${w.rgb.join(',')},${w.alpha})`;
+        ctx.lineWidth   = w.width;
+        ctx.lineJoin    = 'round';
+        ctx.lineCap     = 'round';
+
+        for (let x = 0; x <= W; x += 1) {
+          const phase = x * w.freqX + sec * w.speed;
+          const y     = cy + signal(phase) * amp * breath;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
       });
 
-      // ── occasional glitch lines ──
-      // thin horizontal slices that appear rarely in the periphery
-      if (Math.random() < 0.015) {
-        const zone = Math.random() < 0.5 ? 'top' : 'bottom';
-        const yRange = zone === 'top'
-          ? Math.random() * canvas.height * 0.3
-          : canvas.height * 0.7 + Math.random() * canvas.height * 0.3;
+      // Spawn beat markers occasionally
+      if (sec > nextMarker) {
+        spawnMarker(sec);
+        nextMarker = sec + 1.8 + Math.random() * 2.5;
+      }
 
-        const lineW  = Math.random() * canvas.width * 0.3 + 20;
-        const lineX  = Math.random() * (canvas.width - lineW);
-        const [r, g, b] = Math.random() < 0.7 ? ACCENT : DARK;
+      // Draw and age markers
+      for (let i = markers.length - 1; i >= 0; i--) {
+        const m = markers[i];
+        const age = sec - m.born;
+        if (age > m.life) { markers.splice(i, 1); continue; }
 
-        ctx.fillStyle = `rgba(${r},${g},${b},${Math.random() * 0.35 + 0.1})`;
-        ctx.fillRect(lineX, Math.floor(yRange), lineW, 1);
+        const progress = age / m.life;
+        // Fade in then out
+        const a = progress < 0.1
+          ? progress / 0.1
+          : 1 - (progress - 0.1) / 0.9;
+
+        ctx.strokeStyle = `rgba(${m.rgb.join(',')},${0.22 * a})`;
+        ctx.lineWidth   = 0.75;
+        ctx.beginPath();
+        ctx.moveTo(m.x, 0);
+        ctx.lineTo(m.x, H);
+        ctx.stroke();
       }
     }
 
-    let last = 0;
-    const FPS_INTERVAL = 55;
-
     function loop(t) {
-      if (t - last >= FPS_INTERVAL) {
-        tickParticles();
-        draw();
-        last = t;
-      }
+      draw(t);
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
