@@ -207,8 +207,8 @@
       const N         = 3 + Math.floor(Math.random() * 6);
       // Start large enough that the shape is legible from the first frame
       const baseScale = 0.12 + Math.random() * 0.10;
-      const stagger   = 0.05 + Math.random() * 0.12;
-      const lifeBase  = 1.5 + Math.random() * 2.0;
+      const stagger   = 0.12 + Math.random() * 0.25;
+      const lifeBase  = 3.0 + Math.random() * 3.0;
       const dirBias   = Math.random() < 0.5 ? 1 : -1;
       // Pick a sides value for the whole burst, then vary per ring
       const burstSides = ALL_SIDES[Math.floor(Math.random() * ALL_SIDES.length)];
@@ -224,7 +224,7 @@
           maxR:     Math.min(W, H) * (baseScale + i * (0.07 + Math.random() * 0.08)),
           sides,
           rot:      Math.random() * Math.PI * 2,
-          rotSpeed: (0.05 + Math.random() * 0.25) * dirBias * (Math.random() < 0.3 ? -1 : 1),
+          rotSpeed: (0.02 + Math.random() * 0.08) * dirBias * (Math.random() < 0.3 ? -1 : 1),
           accent:   Math.random() < 0.65,
           seed:     Math.random() * 200,
         });
@@ -301,7 +301,7 @@
     // ── Auto-spawn: keeps shapes alive continuously ────────────────
     // Fires every φ² seconds at the default origin
     let nextAuto = 0;
-    const AUTO_INTERVAL = 0.6; // seconds between bursts
+    const AUTO_INTERVAL = 1.5; // seconds between bursts
 
     // ── Initial burst ──────────────────────────────────────────────
     { const o = randomOrigin(); spawnBurst(o.x, o.y, 0.01); }
@@ -313,7 +313,7 @@
       // Auto-spawn burst at default origin on φ²-based interval
       if (sec >= nextAuto) {
         const o = randomOrigin(); spawnBurst(o.x, o.y, sec);
-        nextAuto = sec + AUTO_INTERVAL + Math.random() * 0.4;
+        nextAuto = sec + AUTO_INTERVAL + Math.random() * 0.8;
       }
 
       ctx.fillStyle = '#ffffff';
