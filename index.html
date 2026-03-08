@@ -28,7 +28,6 @@
       flex-direction: column;
     }
 
-    /* ── Hero ── */
     #hero {
       flex: 1;
       position: relative;
@@ -37,6 +36,7 @@
       justify-content: center;
       min-height: 100svh;
       overflow: hidden;
+      cursor: crosshair;
     }
     #vj-canvas {
       position: absolute;
@@ -54,15 +54,12 @@
       text-transform: uppercase;
       white-space: nowrap;
       color: var(--dark);
-      text-shadow:
-        0 0 20px #fff,
-        0 0 40px #fff,
-        0 0 80px rgba(255,255,255,0.9);
+      pointer-events: none;
+      text-shadow: 0 0 20px #fff, 0 0 50px #fff, 0 0 90px rgba(255,255,255,0.8);
       opacity: 0;
       animation: up 1.4s cubic-bezier(0.22,1,0.36,1) forwards 0.4s;
     }
 
-    /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
       padding: 3rem 2rem;
@@ -78,12 +75,7 @@
       letter-spacing: 0.06em;
       color: var(--muted);
     }
-    .footer-links {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+    .footer-links { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
     .footer-link {
       display: inline-flex;
       align-items: center;
@@ -113,7 +105,6 @@
       text-transform: uppercase;
       color: var(--muted);
     }
-
     @keyframes up { to { opacity: 1; transform: none; } }
     @media (max-width: 480px) {
       .hero-title { letter-spacing: 0.14em; white-space: normal; text-align: center; line-height: 1.3; }
@@ -144,22 +135,23 @@
   </footer>
 
   <script>
+    // ── Golden ratio constants ──────────────────────────────────────
+    const φ  = 1.6180339887;   // golden ratio
+    const φ2 = φ * φ;          // ≈ 2.618
+    const GA = Math.PI * 2 / φ2; // golden angle ≈ 137.5°
+
+    // Fibonacci polygon sides pool
+    const FIB_SIDES = [3, 5, 8, 5, 3, 8];
+
+    // ── Canvas setup ───────────────────────────────────────────────
     const canvas = document.getElementById('vj-canvas');
     const ctx    = canvas.getContext('2d');
-
-    let W, H, DPR, CX, CY, DIAG;
-
-    // Target position (mouse/touch) and current interpolated position
-    let targetX, targetY;
+    let W, H, DPR;
 
     function resize() {
       DPR = window.devicePixelRatio || 1;
       const r = canvas.getBoundingClientRect();
       W = r.width; H = r.height;
-      // Initialize center only on first call
-      if (targetX === undefined) { targetX = W / 2; targetY = H / 2; }
-      CX = W / 2; CY = H / 2;
-      DIAG = Math.hypot(W, H);
       canvas.width  = W * DPR;
       canvas.height = H * DPR;
       ctx.scale(DPR, DPR);
@@ -167,86 +159,10 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // Center moves only on click / tap — not on hover
-    const hero = document.getElementById('hero');
-    function setTarget(clientX, clientY) {
-      const r = canvas.getBoundingClientRect();
-      targetX = clientX - r.left;
-      targetY = clientY - r.top;
-    }
-    hero.addEventListener('click',      e => setTarget(e.clientX, e.clientY));
-    hero.addEventListener('touchstart', e => {
-      setTarget(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: true });
-
-    // ─────────────────────────────────────────────────────────────────
-    // Expanding ring pool
-    // ─────────────────────────────────────────────────────────────────
-    const SHAPES = [0, 0, 0, 3, 4, 4, 6]; // 0 = circle; weighted toward circles
-    const rings  = [];
-    let nextSpawn = 0;
-
-    function spawnRing(sec) {
-      rings.push({
-        born:      sec,
-        life:      2.8 + Math.random() * 2.2,
-        maxR:      DIAG * (0.28 + Math.random() * 0.38),
-        sides:     SHAPES[Math.floor(Math.random() * SHAPES.length)],
-        rot:       Math.random() * Math.PI * 2,
-        rotSpeed:  (Math.random() - 0.5) * 0.4,
-        accent:    Math.random() < 0.65,
-      });
-    }
-
-    function drawRing(ring, sec) {
-      const age  = sec - ring.born;
-      const p    = age / ring.life;           // 0 → 1
-      if (p >= 1) return false;
-
-      const r   = ring.maxR * p;
-      // fade: quick ramp in, long fade out
-      const a   = Math.pow(Math.sin(p * Math.PI), 0.5) * 0.75;
-      const rot = ring.rot + ring.rotSpeed * sec;
-
-      ctx.lineWidth   = 0.6;
-      ctx.strokeStyle = ring.accent
-        ? `rgba(167,232,246,${a})`
-        : `rgba(66,64,61,${a * 0.5})`;
-
-      // Sample the ring perimeter with noise on radius
-      const STEPS  = ring.sides === 0 ? 120 : ring.sides * 24;
-      const noiseA = r * 0.025 * (1 - p * 0.5); // subtle noise — preserves edge shape
-
-      ctx.beginPath();
-      for (let i = 0; i <= STEPS; i++) {
-        const frac = i / STEPS;
-        let θ;
-        if (ring.sides === 0) {
-          θ = frac * Math.PI * 2;
-        } else {
-          // Snap to polygon vertices, interpolate between
-          const seg   = Math.floor(frac * ring.sides);
-          const local = (frac * ring.sides) - seg;
-          θ = ((seg + local) / ring.sides) * Math.PI * 2 + rot;
-        }
-        const nr = r + noiseA * noise(frac * 6, sec * 1.4, ring.born);
-        const x  = CX + nr * Math.cos(θ);
-        const y  = CY + nr * Math.sin(θ);
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-      return true;
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // Stepped / quantised noise — jagged, digital stutter feel
-    // Time is quantised to discrete steps so the noise value "snaps"
-    // rather than flowing smoothly → produces a jittery, VJ glitch look.
-    // ─────────────────────────────────────────────────────────────────
-    const NOISE_STEP = 0.10; // seconds per noise frame (lower = faster stutter)
+    // ── Stepped / quantised noise ──────────────────────────────────
+    // Time snaps to discrete frames → jagged, digital stutter
+    const NOISE_STEP = 0.10;
     function noise(x, t, seed = 0) {
-      // Quantise time → value holds for NOISE_STEP seconds then jumps
       const qt = Math.floor(t / NOISE_STEP) * NOISE_STEP;
       return (
         Math.sin(x * 4.1  + qt * 1.7  + seed) * 0.50 +
@@ -255,130 +171,125 @@
       );
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Grid — each line wavers with noise
-    // ─────────────────────────────────────────────────────────────────
+    // ── Drifting grid (background) ─────────────────────────────────
     function drawGrid(sec) {
       const CELL = 60;
       const ox   = (sec * 4) % CELL;
       const oy   = (sec * 3) % CELL;
-      const AMP  = 2.5; // noise amplitude in px
-
-      ctx.strokeStyle = 'rgba(167,232,246,0.12)';
+      ctx.strokeStyle = 'rgba(167,232,246,0.10)';
       ctx.lineWidth   = 0.4;
 
-      // Vertical lines — wavy in x
       for (let bx = -CELL + (W % CELL) / 2 - ox; bx < W + CELL; bx += CELL) {
         ctx.beginPath();
-        for (let y = 0; y <= H; y += 6) {
-          const x = bx + AMP * noise(y / H, sec * 0.6, bx);
+        for (let y = 0; y <= H; y += 8) {
+          const x = bx + 2.5 * noise(y / H, sec * 0.6, bx);
           y === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
         ctx.stroke();
       }
-
-      // Horizontal lines — wavy in y
       for (let by = -CELL + (H % CELL) / 2 - oy; by < H + CELL; by += CELL) {
         ctx.beginPath();
-        for (let x = 0; x <= W; x += 6) {
-          const y = by + AMP * noise(x / W, sec * 0.5, by);
+        for (let x = 0; x <= W; x += 8) {
+          const y = by + 2.5 * noise(x / W, sec * 0.5, by);
           x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
         ctx.stroke();
       }
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Spokes — lateral wobble along each spoke
-    // ─────────────────────────────────────────────────────────────────
-    function drawSpokes(sec) {
-      const N      = 12;
-      const maxR   = Math.min(W, H) * 0.42;
-      const rot    = sec * 0.07;
-      const breath = 0.55 + 0.45 * Math.sin(sec * 0.35);
-      const AMP    = 3; // wobble amplitude in px
+    // ── Polygon burst pool ─────────────────────────────────────────
+    const rings = [];
 
-      ctx.lineWidth = 0.4;
+    // Spawn 5 (Fibonacci) staggered polygons at (ox, oy)
+    function spawnBurst(ox, oy, sec) {
+      const N = 5;
       for (let i = 0; i < N; i++) {
-        const θ = (i / N) * Math.PI * 2 + rot;
-        const r = maxR * breath;
-        const a = 0.05 + 0.06 * Math.abs(Math.sin((i / N) * Math.PI + sec * 0.2));
-        ctx.strokeStyle = `rgba(66,64,61,${a})`;
-
-        // Perpendicular direction to the spoke
-        const px = -Math.sin(θ), py = Math.cos(θ);
-
-        ctx.beginPath();
-        const SEGS = 20;
-        for (let s = 0; s <= SEGS; s++) {
-          const frac  = s / SEGS;
-          const d     = AMP * noise(frac, sec * 1.2, i * 5.3) * frac; // no wobble at origin
-          const x     = CX + Math.cos(θ) * r * frac + px * d;
-          const y     = CY + Math.sin(θ) * r * frac + py * d;
-          s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.stroke();
+        rings.push({
+          ox, oy,
+          born:     sec + i * 0.08 * φ,              // golden-ratio stagger
+          life:     φ2 * (0.85 + Math.random() * 0.45),
+          maxR:     Math.min(W, H) * (0.10 + i * 0.085 * φ),
+          sides:    FIB_SIDES[i % FIB_SIDES.length], // 3→5→8 cycle
+          rot:      i * GA,                           // golden angle per ring
+          rotSpeed: (1 / φ) * 0.12 * (Math.random() < 0.5 ? 1 : -1),
+          accent:   Math.random() < 0.65,
+          seed:     Math.random() * 100,
+        });
       }
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Lissajous — radial noise displaces each point
-    // ─────────────────────────────────────────────────────────────────
-    const LISSAJOUS = [
-      { a: 3, b: 2 },
-      { a: 5, b: 4 },
-      { a: 4, b: 3 },
-    ];
-    let lisIdx = 0, lisSwitch = 0;
+    // Draw one polygon ring with jagged edges (noise ⊥ to each edge)
+    function drawRing(ring, sec) {
+      const age = sec - ring.born;
+      if (age < 0)  return true;  // not yet active
+      const p = age / ring.life;
+      if (p >= 1)   return false; // expired
 
-    function drawLissajous(sec) {
-      if (sec - lisSwitch > 10) { lisIdx = (lisIdx + 1) % LISSAJOUS.length; lisSwitch = sec; }
-      const { a, b } = LISSAJOUS[lisIdx];
-      const δ     = sec * 0.12;
-      const scale = Math.min(W, H) * 0.12;
-      const AMP   = scale * 0.04; // subtle noise — Lissajous shape stays legible
+      const r    = ring.maxR * p;
+      const a    = Math.pow(Math.sin(p * Math.PI), 0.48) * 0.85;
+      const rot  = ring.rot + ring.rotSpeed * sec;
+      const nAmp = r * 0.04;   // noise amplitude proportional to current radius
 
-      ctx.strokeStyle = 'rgba(167,232,246,0.28)';
-      ctx.lineWidth   = 0.5;
+      ctx.lineWidth   = 0.6;
+      ctx.strokeStyle = ring.accent
+        ? `rgba(167,232,246,${a})`
+        : `rgba(66,64,61,${a * 0.52})`;
+
       ctx.beginPath();
-      const N = 600;
-      for (let i = 0; i <= N; i++) {
-        const t  = (i / N) * Math.PI * 2;
-        const nx = AMP * noise(t, sec * 0.8, 1.0);
-        const ny = AMP * noise(t, sec * 0.7, 7.3);
-        const x  = CX + scale * Math.sin(a * t + δ) + nx;
-        const y  = CY + scale * Math.sin(b * t)      + ny;
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      let first = true;
+
+      for (let s = 0; s < ring.sides; s++) {
+        const θ0  = (s       / ring.sides) * Math.PI * 2 + rot;
+        const θ1  = ((s + 1) / ring.sides) * Math.PI * 2 + rot;
+        const v0x = ring.ox + r * Math.cos(θ0);
+        const v0y = ring.oy + r * Math.sin(θ0);
+        const v1x = ring.ox + r * Math.cos(θ1);
+        const v1y = ring.oy + r * Math.sin(θ1);
+
+        const eLen = Math.hypot(v1x - v0x, v1y - v0y);
+        const ex   = (v1x - v0x) / eLen;
+        const ey   = (v1y - v0y) / eLen;
+        const px   = -ey, py = ex;  // perpendicular to edge
+
+        // Segments per edge — φ-scaled density
+        const SEGS = Math.max(4, Math.ceil(eLen / (8 / φ)));
+        for (let j = 0; j <= SEGS; j++) {
+          const t  = j / SEGS;
+          // Noise keyed on (side index × φ + t × φ) for incommensurable phase
+          const d  = nAmp * noise(s * φ + t * φ2, sec * 1.5, ring.seed);
+          const x  = v0x + t * (v1x - v0x) + px * d;
+          const y  = v0y + t * (v1y - v0y) + py * d;
+          first ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          first = false;
+        }
       }
+      ctx.closePath();
       ctx.stroke();
+      return true;
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Main loop
-    // ─────────────────────────────────────────────────────────────────
+    // ── Input: click / tap spawns burst ───────────────────────────
+    const hero = document.getElementById('hero');
+    function handleInput(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      spawnBurst(clientX - r.left, clientY - r.top, performance.now() / 1000);
+    }
+    hero.addEventListener('click',      e => handleInput(e.clientX, e.clientY));
+    hero.addEventListener('touchstart', e => {
+      handleInput(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    // ── Initial burst at center so screen isn't blank ──────────────
+    spawnBurst(W / 2, H / 2, 0.01);
+
+    // ── Main loop ──────────────────────────────────────────────────
     function draw(t) {
       const sec = t / 1000;
-
-      // Smooth lerp toward mouse/touch target (ease = 0.06)
-      CX += (targetX - CX) * 0.06;
-      CY += (targetY - CY) * 0.06;
-
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, W, H);
 
       drawGrid(sec);
-      drawSpokes(sec);
-      drawLissajous(sec);
 
-      // Spawn rings on a rhythm-like interval
-      if (sec >= nextSpawn) {
-        spawnRing(sec);
-        // Occasionally double-spawn for density variation
-        if (Math.random() < 0.3) spawnRing(sec);
-        nextSpawn = sec + 0.7 + Math.random() * 0.8;
-      }
-
-      // Draw & prune dead rings
       for (let i = rings.length - 1; i >= 0; i--) {
         if (!drawRing(rings[i], sec)) rings.splice(i, 1);
       }
