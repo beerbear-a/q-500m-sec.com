@@ -200,7 +200,7 @@
         return {
           baseY:       H * TOP_FRAC + i * spacing,
           env,
-          baseAmp:     spacing * 5.5 * env,
+          baseAmp:     spacing * 4.2 * env,
           seed:        prev ? prev.seed : i * 83.17 + Math.random() * 40,
           // All lines flow left — different speeds make them visually independent
           speed:       prev ? prev.speed   : 0.8 + Math.random() * 1.6,
@@ -263,11 +263,11 @@
         ctx.fill();
 
         // Stroke
-        const alpha = (0.22 + ln.env * 0.72) * (0.7 + breath * 0.3);
+        const alpha = (0.18 + ln.env * 0.60) * (0.7 + breath * 0.3);
         ctx.strokeStyle = ln.isAccent
           ? `rgba(167,232,246,${alpha})`
-          : `rgba(66,64,61,${alpha * 0.5})`;
-        ctx.lineWidth = 0.85;
+          : `rgba(66,64,61,${alpha * 0.45})`;
+        ctx.lineWidth = 0.45;
         ctx.lineJoin  = 'round';
         ctx.beginPath();
         ctx.moveTo(pts[0][0], pts[0][1]);
