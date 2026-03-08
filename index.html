@@ -149,10 +149,15 @@
 
     let W, H, DPR, CX, CY, DIAG;
 
+    // Target position (mouse/touch) and current interpolated position
+    let targetX, targetY;
+
     function resize() {
       DPR = window.devicePixelRatio || 1;
       const r = canvas.getBoundingClientRect();
       W = r.width; H = r.height;
+      // Initialize center only on first call
+      if (targetX === undefined) { targetX = W / 2; targetY = H / 2; }
       CX = W / 2; CY = H / 2;
       DIAG = Math.hypot(W, H);
       canvas.width  = W * DPR;
@@ -161,6 +166,22 @@
     }
     window.addEventListener('resize', resize);
     resize();
+
+    // Mouse tracking
+    const hero = document.getElementById('hero');
+    function setTarget(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      targetX = clientX - r.left;
+      targetY = clientY - r.top;
+    }
+    hero.addEventListener('mousemove', e => setTarget(e.clientX, e.clientY));
+    hero.addEventListener('touchmove', e => {
+      e.preventDefault();
+      setTarget(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+    hero.addEventListener('touchstart', e => {
+      setTarget(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
 
     // ─────────────────────────────────────────────────────────────────
     // Expanding ring pool
@@ -336,6 +357,10 @@
     // ─────────────────────────────────────────────────────────────────
     function draw(t) {
       const sec = t / 1000;
+
+      // Smooth lerp toward mouse/touch target (ease = 0.06)
+      CX += (targetX - CX) * 0.06;
+      CY += (targetY - CY) * 0.06;
 
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, W, H);
