@@ -268,23 +268,39 @@
       return true;
     }
 
-    // ── Input: click / tap spawns burst ───────────────────────────
+    // ── Default origin — slightly right of center ──────────────────
+    const DEFAULT_OX = () => W * 0.58;
+    const DEFAULT_OY = () => H * 0.50;
+
+    // ── Click / tap: spawn extra burst at that point ───────────────
     const hero = document.getElementById('hero');
-    function handleInput(clientX, clientY) {
+    hero.addEventListener('click', e => {
       const r = canvas.getBoundingClientRect();
-      spawnBurst(clientX - r.left, clientY - r.top, performance.now() / 1000);
-    }
-    hero.addEventListener('click',      e => handleInput(e.clientX, e.clientY));
+      spawnBurst(e.clientX - r.left, e.clientY - r.top, performance.now() / 1000);
+    });
     hero.addEventListener('touchstart', e => {
-      handleInput(e.touches[0].clientX, e.touches[0].clientY);
+      const r = canvas.getBoundingClientRect();
+      spawnBurst(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top, performance.now() / 1000);
     }, { passive: true });
 
-    // ── Initial burst at center so screen isn't blank ──────────────
-    spawnBurst(W / 2, H / 2, 0.01);
+    // ── Auto-spawn: keeps shapes alive continuously ────────────────
+    // Fires every φ² seconds at the default origin
+    let nextAuto = 0;
+    const AUTO_INTERVAL = φ2 * 0.9; // ≈ 2.36 s
+
+    // ── Initial burst at default position ─────────────────────────
+    spawnBurst(DEFAULT_OX(), DEFAULT_OY(), 0.01);
 
     // ── Main loop ──────────────────────────────────────────────────
     function draw(t) {
       const sec = t / 1000;
+
+      // Auto-spawn burst at default origin on φ²-based interval
+      if (sec >= nextAuto) {
+        spawnBurst(DEFAULT_OX(), DEFAULT_OY(), sec);
+        nextAuto = sec + AUTO_INTERVAL + Math.random() * φ * 0.4;
+      }
+
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, W, H);
 
