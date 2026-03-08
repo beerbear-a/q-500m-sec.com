@@ -200,27 +200,29 @@
     // ── Polygon burst pool ─────────────────────────────────────────
     const rings = [];
 
-    // All possible polygon sides (Fibonacci + extras for variety)
-    const ALL_SIDES = [3, 3, 4, 5, 5, 6, 8, 8];
+    // Equal-weight polygon sides — no duplicates so all shapes appear evenly
+    const ALL_SIDES = [4, 5, 6, 7, 8, 9, 10, 12];
 
     function spawnBurst(ox, oy, sec) {
-      // Randomise ring count per burst: 3–8
       const N         = 3 + Math.floor(Math.random() * 6);
-      // Randomise base scale and stagger timing
-      const baseScale = 0.06 + Math.random() * 0.12;
+      // Start large enough that the shape is legible from the first frame
+      const baseScale = 0.12 + Math.random() * 0.10;
       const stagger   = 0.05 + Math.random() * 0.12;
-      // Randomise lifetime range
       const lifeBase  = 1.5 + Math.random() * 2.0;
-      // Randomise overall rotation direction of this burst
       const dirBias   = Math.random() < 0.5 ? 1 : -1;
+      // Pick a sides value for the whole burst, then vary per ring
+      const burstSides = ALL_SIDES[Math.floor(Math.random() * ALL_SIDES.length)];
 
       for (let i = 0; i < N; i++) {
+        // Each ring may shift sides by ±1 for variety within a burst
+        const shift = Math.floor(Math.random() * 3) - 1; // -1, 0, or +1
+        const sides = Math.max(4, Math.min(12, burstSides + shift));
         rings.push({
           ox, oy,
           born:     sec + i * stagger,
           life:     lifeBase * (0.7 + Math.random() * 0.6),
-          maxR:     Math.min(W, H) * (baseScale + i * (0.06 + Math.random() * 0.08)),
-          sides:    ALL_SIDES[Math.floor(Math.random() * ALL_SIDES.length)],
+          maxR:     Math.min(W, H) * (baseScale + i * (0.07 + Math.random() * 0.08)),
+          sides,
           rot:      Math.random() * Math.PI * 2,
           rotSpeed: (0.05 + Math.random() * 0.25) * dirBias * (Math.random() < 0.3 ? -1 : 1),
           accent:   Math.random() < 0.65,
