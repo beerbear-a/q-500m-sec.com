@@ -134,7 +134,7 @@
     <p class="footer-copy">&copy; 2025 Ungrateful Dog Lab.</p>
   </footer>
 
-  <script>
+<script>
     // ── Golden ratio constants ──────────────────────────────────────
     const φ  = 1.6180339887;   // golden ratio
     const φ2 = φ * φ;          // ≈ 2.618
@@ -159,25 +159,24 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // ── Stepped / quantised noise ──────────────────────────────────
-    // Time snaps to discrete frames → jagged, digital stutter
-     const NOISE_STEP = 0.08; 
-    function noise(x, t, seed = 0) {
-      const qt = Math.floor(t / NOISE_STEP) * NOISE_STEP;
-      
-      // 1. 基本の緩やかなうねり (Sine)
-      let wave = Math.sin(x * 5.1 + qt * 1.7 + seed) * 0.40;
-      
-      // 2. ノコギリ波 (Sawtooth) - 鋭く切り立つ斜めのエッジ
-      wave += ((x * 12.3 - qt * 3.1 + seed) % 2 - 1) * 0.30;
-      
-      // 3. 矩形波 / パルス (Square/Pulse) - デジタルなON/OFFの垂直ノイズ
-      wave += Math.sign(Math.sin(x * 25.0 + qt * 8.0 + seed)) * 0.15;
+    // ── Stepped / quantised noise (Edgy & Scientific) ──────────────
+    const NOISE_STEP = 0.08;
+    function noise(x, t, seed = 0) {
+      const qt = Math.floor(t / NOISE_STEP) * NOISE_STEP;
+      
+      // 1. 基本の緩やかなうねり (Sine)
+      let wave = Math.sin(x * 5.1 + qt * 1.7 + seed) * 0.40;
+      
+      // 2. ノコギリ波 (Sawtooth) - 鋭く切り立つ斜めのエッジ
+      wave += ((x * 12.3 - qt * 3.1 + seed) % 2 - 1) * 0.30;
+      
+      // 3. 矩形波 / パルス (Square/Pulse) - デジタルなON/OFFの垂直ノイズ
+      wave += Math.sign(Math.sin(x * 25.0 + qt * 8.0 + seed)) * 0.15;
 
-      // 4. 振幅の量子化 (Bitcrush) - 値を階段状にして生データのようなカクカク感を出す
-      const levels = 6; // この数値を減らすほど、ブロックノイズ感が強まります
-      return Math.floor(wave * levels) / levels;
-    }Ï
+      // 4. 振幅の量子化 (Bitcrush)
+      const levels = 6;
+      return Math.floor(wave * levels) / levels;
+    }
 
     // ── Drifting grid (background) ─────────────────────────────────
     function drawGrid(sec) {
@@ -186,8 +185,10 @@
       const oy   = (sec * 3) % CELL;
       ctx.strokeStyle = 'rgba(167,232,246,0.10)';
       ctx.lineWidth   = 0.4;
+      
+      // エッジを鋭くバキッとさせる設定
       ctx.lineJoin = 'miter';
-      ctx.miterLimit = 10;
+      ctx.miterLimit = 10;
 
       for (let bx = -CELL + (W % CELL) / 2 - ox; bx < W + CELL; bx += CELL) {
         ctx.beginPath();
@@ -210,22 +211,19 @@
     // ── Polygon burst pool ─────────────────────────────────────────
     const rings = [];
 
-    // Equal-weight polygon sides — no duplicates so all shapes appear evenly
+    // Equal-weight polygon sides
     const ALL_SIDES = [4, 5, 6, 7, 8, 9, 10, 12];
 
     function spawnBurst(ox, oy, sec) {
       const N         = 3 + Math.floor(Math.random() * 6);
-      // Start large enough that the shape is legible from the first frame
       const baseScale = 0.12 + Math.random() * 0.50;
       const stagger   = 0.12 + Math.random() * 0.25;
       const lifeBase  = 3.0 + Math.random() * 3.0;
       const dirBias   = Math.random() < 0.5 ? 1 : -1;
-      // Pick a sides value for the whole burst, then vary per ring
       const burstSides = ALL_SIDES[Math.floor(Math.random() * ALL_SIDES.length)];
 
       for (let i = 0; i < N; i++) {
-        // Each ring may shift sides by ±1 for variety within a burst
-        const shift = Math.floor(Math.random() * 3) - 1; // -1, 0, or +1
+        const shift = Math.floor(Math.random() * 3) - 1;
         const sides = Math.max(4, Math.min(12, burstSides + shift));
         rings.push({
           ox, oy,
@@ -241,28 +239,32 @@
       }
     }
 
-    // Draw one polygon ring with jagged edges (noise ⊥ to each edge)
+    // Draw one polygon ring with jagged edges
     function drawRing(ring, sec) {
       const age = sec - ring.born;
-      if (age < 0)  return true;  // not yet active
+      if (age < 0)  return true; 
       const p = age / ring.life;
-      if (p >= 1)   return false; // expired
+      if (p >= 1)   return false; 
 
       const r    = ring.maxR * p;
       const a    = Math.pow(Math.sin(p * Math.PI), 0.48) * 0.85;
       const rot  = ring.rot + ring.rotSpeed * sec;
-      const nAmp = r * 0.04;   // noise amplitude proportional to current radius
+      const nAmp = r * 0.04; 
 
       ctx.lineWidth   = 0.6;
       ctx.strokeStyle = ring.accent
         ? `rgba(167,232,246,${a})`
         : `rgba(66,64,61,${a * 0.52})`;
+        
+      // エッジを鋭くバキッとさせる設定
+      ctx.lineJoin = 'miter';
+      ctx.miterLimit = 10;
 
       ctx.beginPath();
       let first = true;
 
       for (let s = 0; s < ring.sides; s++) {
-        const θ0  = (s       / ring.sides) * Math.PI * 2 + rot;
+        const θ0  = (s        / ring.sides) * Math.PI * 2 + rot;
         const θ1  = ((s + 1) / ring.sides) * Math.PI * 2 + rot;
         const v0x = ring.ox + r * Math.cos(θ0);
         const v0y = ring.oy + r * Math.sin(θ0);
@@ -272,13 +274,11 @@
         const eLen = Math.hypot(v1x - v0x, v1y - v0y);
         const ex   = (v1x - v0x) / eLen;
         const ey   = (v1y - v0y) / eLen;
-        const px   = -ey, py = ex;  // perpendicular to edge
+        const px   = -ey, py = ex;  
 
-        // Segments per edge — φ-scaled density
         const SEGS = Math.max(4, Math.ceil(eLen / (8 / φ)));
         for (let j = 0; j <= SEGS; j++) {
           const t  = j / SEGS;
-          // Noise keyed on (side index × φ + t × φ) for incommensurable phase
           const d  = nAmp * noise(s * φ + t * φ2, sec * 1.5, ring.seed);
           const x  = v0x + t * (v1x - v0x) + px * d;
           const y  = v0y + t * (v1y - v0y) + py * d;
@@ -291,7 +291,7 @@
       return true;
     }
 
-    // ── Random origin — different position every burst ─────────────
+    // ── Random origin ─────────────
     function randomOrigin() {
       return { x: W * (0.1 + Math.random() * 0.8),
                y: H * (0.1 + Math.random() * 0.8) };
@@ -308,10 +308,9 @@
       spawnBurst(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top, performance.now() / 1000);
     }, { passive: true });
 
-    // ── Auto-spawn: keeps shapes alive continuously ────────────────
-    // Fires every φ² seconds at the default origin
+    // ── Auto-spawn ────────────────
     let nextAuto = 0;
-    const AUTO_INTERVAL = 1.5; // seconds between bursts
+    const AUTO_INTERVAL = 1.5; 
 
     // ── Initial burst ──────────────────────────────────────────────
     { const o = randomOrigin(); spawnBurst(o.x, o.y, 0.01); }
@@ -320,7 +319,6 @@
     function draw(t) {
       const sec = t / 1000;
 
-      // Auto-spawn burst at default origin on φ²-based interval
       if (sec >= nextAuto) {
         const o = randomOrigin(); spawnBurst(o.x, o.y, sec);
         nextAuto = sec + AUTO_INTERVAL + Math.random() * 0.8;
@@ -339,6 +337,5 @@
     function loop(t) { draw(t); requestAnimationFrame(loop); }
     requestAnimationFrame(loop);
   </script>
-
 </body>
 </html>
