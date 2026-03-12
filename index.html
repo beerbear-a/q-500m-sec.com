@@ -2,103 +2,515 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>CSS Controlled SVG</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ungrateful Dog Lab. — Shinichi Arita (@Beerbear_A)">
+  <title>Ungrateful Dog Lab.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --white:  #ffffff;
+      --accent: #a7e8f6;
+      --dark:   #42403d;
+      --muted:  rgba(66,64,61,0.38);
+      --border: rgba(66,64,61,0.12);
+    }
+    html, body { height: 100%; }
     body {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      background: var(--white);
+      color: var(--dark);
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+    }
+
+    /* ── レイアウト設定 ── */
+    #hero {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
       align-items: center;
-      min-height: 100vh;
-      background-color: #f0f0f0;
-      margin: 0;
+      justify-content: center;
+      min-height: 100svh;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+    #vj-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
-    /* ── ここからSVGのCSS制御 ── */
-
+    /* ── SVGロゴの設定 ── */
     .dog_svg {
+      position: relative;
+      z-index: 1;
       width: 80%;
-      max-width: 500px;
-      /* ここで指定した color が、SVG全体の基本色（currentColor）になります */
-      color: #42403d; 
-      transition: color 0.3s ease; /* 色がフワッと変わるアニメーション */
+      max-width: 320px;
+      /* ここで基本色を指定（親要素のカラー） */
+      color: var(--dark);
+      transition: color 0.4s ease;
       cursor: pointer;
+      /* ふわっと浮かび上がる初期アニメーション */
+      opacity: 0;
+      animation: up 1.4s cubic-bezier(0.22,1,0.36,1) forwards 0.2s;
     }
-
+    
     .dog_svg svg {
       width: 100%;
       height: auto;
       display: block;
-      /* 親要素の color を引き継ぐ設定 */
-      fill: currentColor; 
+      fill: currentColor; /* 親のcolorを引き継ぐ */
+      overflow: visible;  /* パーツが枠外に飛んでも見えるようにする */
     }
 
-    /* 元々白（.st0）だったアクセントパーツの色指定 */
+    /* アクセントパーツ（元の白目やハイライト部分） */
     .dog_svg .accent-part {
-      fill: #ffffff; /* 背景色と同じにすると「くり抜かれた」ように見えます */
-      transition: fill 0.3s ease;
+      fill: var(--white);
+      transition: fill 0.4s ease;
     }
 
-    /* ── ホバー時のエフェクト例 ── */
+    /* ホバー時の色変化 */
     .dog_svg:hover {
-      color: #a7e8f6; /* メインカラーが水色に変化 */
+      color: var(--accent);
     }
     .dog_svg:hover .accent-part {
-      fill: #222222; /* アクセント部分も合わせて色を変えることができます */
+      fill: #222222;
     }
 
+    /* JSアニメーション用のグループ（トランジションをオフにして軽量化） */
+    .dog_svg g.particle {
+      transition: none !important;
+    }
+
+    /* ── タイトルの設定 ── */
+    .hero-title {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(1.1rem, 3.5vw, 2.5rem);
+      font-weight: 300;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      color: var(--dark);
+      pointer-events: none;
+      text-shadow: 0 0 20px #fff, 0 0 50px #fff, 0 0 90px rgba(255,255,255,0.8);
+      opacity: 0;
+      animation: up 1.4s cubic-bezier(0.22,1,0.36,1) forwards 0.4s;
+    }
+
+    /* ── フッターの設定 ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      background: var(--white);
+    }
+    .footer-name {
+      font-size: 1rem;
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .footer-links { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.875rem 2rem;
+      min-width: 140px;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: var(--dark);
+      text-decoration: none;
+      border: 1.5px solid var(--dark);
+      transition: background 0.22s, border-color 0.22s, color 0.22s;
+    }
+    .footer-link:hover, .footer-link:active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .footer-link svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
+    .footer-copy {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.5625rem;
+      font-weight: 300;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    @keyframes up { to { opacity: 1; transform: none; } }
+    @media (max-width: 480px) {
+      .hero-title { letter-spacing: 0.14em; white-space: normal; text-align: center; line-height: 1.3; }
+      .footer-link { min-width: 130px; padding: 0.875rem 1.5rem; }
+    }
   </style>
 </head>
 <body>
 
-  <div class="dog_svg" id="dog_svg">
-    <!-- fill="currentColor" を追加し、不要な記述を整理しました -->
-    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 494.6 224.5" fill="currentColor">
-      
-      <!-- 個別のパーツ群 -->
-      <rect x="1159.9" y="-392.5" width="8" height="8" transform="translate(1523.8 784.5) rotate(-88.6)"/>
-      <g>
-        <path d="M120.8,103l4.8-.8.7-4.7,4.6-.3.4-5,4.4.2v9.4l-5.1.3-.2,5-5,.3.4,5.3c2.2.2,3.8.2,4.6.9s.5,3.7-.5,3.8l-4.4.3v10l5.5.3v-10l5.3-.5.2-9.4,4.5-.5.3-9.7,5-.5.2-9.9h4.7c0,0,.6-10.1.6-10.1l4.6-.2.3-4.9,4.6-.3,1-5.1c1.7,0,3.3-.2,4-.5s.5-2.2.6-3.6,4-1.5,4.5-.3l.2,9.3,5.1.2.6-5h4.1c0,0,.5,5,.5,5l5.2-.2.6-5h9.1l.2,4.4-5.4.8.5,5,5,.4.5,4.6,3.9.5c.8,0,.4,2.9.6,4s5.3,1.6,5.5,0l.4-3.5c0-.6,1.8-.7,2.7-.8l1.6-.2c1.1,0,.3-4.7,1.2-4.7l3-.3c.8,0,1,2,1,3.7s2.1,1.8,3.5,1.8c2.3,0,2.2-2.2,1.9-5.1l4.9-.5.3-4.9,4.9-.4.3-9.7c1-.4,4.1-.7,4.2.2l.4,4c.1,1,3,.4,4.1.5s1.4-2.3,1.2-3.9,2.3-1.4,3.4-1.2,1.1,2.3,1.3,4,3.7,1.3,5.4,1.1l.3-4.9,5-.4.3-4.8,4.8-.3.3-4.9,9.9-.4c.2-1.7.5-4,1.1-4.6l8.8-.2.6-5h9c0,0,.9,4.9.9,4.9l4.7.5.4,4.4,4.8.4.3,10.1h9.8l.7,4.9,4.6.5.2,9.8,4.9.5.4,4.8h5.3l.3-5.4-5.3-.2-.2-10-4.9-.3v-9.3h5v-15.5l5.3-.4v-9.6l15.1-.5c.3-1.4.3-3.8,0-5.4l-14.7-.2-.6-4.8h-9.7l-.4-5.2h-15.7l-.4,5.1h-10c0,.1-.2,4.9-.2,4.9h-14.8l-.6,5.4h-50.3l-.4-5.3-29.7-.2-.2-4.7-14.8-.2-.8-4.8-4.7-.6-.6-4.9h-14.5c-.3-2-.3-4.6-1.4-5s-4.4-.3-4.5.9l-.4,3.6c0,.9-4.4.4-4.5.9l-.4,1.9c-.1.6,0,2.8-.7,2.7h-3.4c-.8-.2-.2-2.8-.5-4s-4.3-1.2-5.5-.6l-.3,4.6-4.7.3-.3,4.9-5.1.4v4.6c-.1,0-5.1.5-5.1.5v14.9l-4.8.5-.4,4.6-4.9.5-.5,4.6-4.5.5-.4,4.9-4.8.4-.2,4.7-5,.6-.4,3.9c0,.8-2.7.6-3.9.8-.9.4-1.3,4.4-.2,5s3.3.5,4,1.1.3,3.9-.7,3.9h-6.9c0,0-.6,5.2-.6,5.2l-4.4.3-.4,4.8-5,.5-.3,4.4-4.9.5-.6,4.9-4,.5c-.8,0-.3,2.6-.6,4.1l-4.9.5-.4,4.8-4.5.4c-.3,1.5-.2,4.3.8,5.3h14.5c0,0,.5-4.9.5-4.9l5-.3v-9.8l4.2-.2,1.1,5.1,7.9-.7.3-14.4,4.1-.6.4,5,5.3.2v-5.1l-5-.3v-10c1.4,0,3.5-.3,4.1.4s.6,2.8.7,4.5l4.7.7.6,4c0,1,3,.6,4,.5s1.2-2.2,1.3-4.4l5-.5v-15.3c0,0,5.2-.4,5.2-.4l.2-9.9,4.8-.4.3-9.8h8.5c.7.2.8,2.9.7,3.6s-2,.9-3.7,1-1.4,2.9-1,4.2,2.4,1.2,4.7,1.2l.3,9.9h-3.5c-.9-.2-1.1-2.9-1.2-4.3-.4-.8-4.2-1.2-5-.2s-.5,4.2,0,4.6l4.7.7c.3,1.9-.2,4.3.7,4.5s3.3.3,4.2,0,.5-3,.6-4.5c.5-.4,3.7-.9,4.4,0s.3,4.1-.2,4.5c-1.7.2-3.3,0-3.9.8s-.8,3.2-.1,3.8,2.5.4,4.3.3l.2,10.4c-1.4,0-4.6-.3-4.8.8l-.8,3.8c-.2,1-3.9.2-3.9-.9v-8.6c-.1,0-5.1-.6-5.1-.6l-.3-10.1-5.6.3-.2,14.9-4.9.6v4.4c0,0-10.1.2-10.1.2l-.5,4.9-4.6.6-.2,9.4-4.3.6-.7-5.2h-4.9c0,0-.4,4.9-.4,4.9-.9.3-2.9.3-3,1.1l-.4,4.1-9.5.4-.8,4.9h-20.1c0,0-.2,9.7-.2,9.7l-5.1.7v19.6l-5.2.9-.2,14.8-4.8.7-.4,4.7h-9.2c0-.1-.2-14.6-.2-14.6h4.4l.2,4.7h5.7c0-3.7,0-7.4-.3-10.6-1.8,0-3.9,0-4.5-.7s-.6-4,.5-3.9c1.6.2,4.1.2,4.2-.8l.4-3.6c0-.9,2.9-.4,3.9-.7s1.4-5,0-5.5-3.7,0-3.8-.8l-.2-3.7c0-1,2.3-.7,4.3-.7l.5-4.6,5.3-.3.5-10.2-5.9-.2-.5,4.9-9.8.3-.4,4.9-4.7.2-.3,9.8-4.9.5-.2,10-4.9.3-.4,4.8-4.2.5c-1,.1-.7,3.2-.5,4.8h-4.8l-.6,4.8-4.6.2-.6,5.3c-1.8,0-3.9-.2-4.4.7s-.6,3.2,0,4,3,.7,4,.5,1.2-3,1.1-4.9c1.1,0,4.7.3,5-1s.6-2.8.8-3.6,2.2-.6,4-.8l.6-4.5,4.9-.6.3-4.9,5.1-.2.2-5h4.4v9.6l-4.8.7-.6,4.4-4.7.5-.4,4.7-4.9.3c0,1.6.1,4.3-.9,4.6s-3.8,0-3.8.9l-.4,4.4H0v-14.5l5-.6.5-4.5,4.5-.4.6-4.7,4.7-.7.6-4.6,3.9-.5c.8-.1.7-2.5.8-4.1l5-.7.3-9.8,5-.5.2-9.9,4.8-.5.4-4.5,9.8-.3.5-5,9.7-.3.3-4.7,4.8-.4.4-4.7,4.6-.4.6-4.8,4.8-.5v-4.6c0,0,5-.5,5-.5l.4-4.4,4.7-.8.5-4.1c0-.8,2.8-.5,3.8-.9s1-3,1.1-4.6l4.8-.5.2-9.7c1-.4,2.6-.5,2.7-1.1l.5-4,4.4-.4.9-4.9,4.5-.5.6-4c0-1,2.8-.7,4.3-.8l1-4.8,4.4-.6v-14.8l4.9-.5.5-4.8,4.9-.4.2-9.9h9.8l.8-5h14.6l.4-5.3h19.3l.7,5.1,9.5.2.5,4.8,9.9.2.2,5.1,14.9.2.4,4.8h24.6l.8,5.3h40.8l.8-5.2h9.5l.5-4.8h14.8c0-.1.7-5.4.7-5.4h24.6l.4,5.3h9.9l.6,4.8,19.9.2.5,5.1h15c0,.1.6,5,.6,5l4.6.5.6,4.8h9.8c0,0,.6,5,.6,5l3.9.5c1,0,.7,3,.8,4.4l4.9.9.5,4.4,4.8.5.2,15,5,.3v14.9c.1,0,5.2.6,5.2.6l.3,4.4,4.8.5v9.6l5.1.9.2,9.7,10.2.3.2,4.8,4.8.6.5,4.4,14.9.2.5,5.1h20.7l.7-5.1h19.4l.2,9.5-10.1.3-.6,5.1h-50.1l-.9-5-4-.5-.9-4.5-9.7-.3-.5-4.7-4.6-.6-.4-4.6-5-.4-.4-4.8h-14.8l-.5-5-4.9-.6v-19.5l-5.1-1-.3-19.7-4.8-.6-.3-9.8-4.9-.7-.5-4c-.1-.9-2.8-.6-4.4-.7l-.6-5.1h-4.6l-.8-5.2h-25.8l-.3,25.5-4.4.7c-.9,0-.4,3.1-.3,4s2.5,1,4.7,1l.2,15.1,4.9.8.5,4c.1,1,2.9.7,4.4.7l.8,4.9,9.6.3.3,4.9,4.8.4.6,4.8,9.9.3.5,4.7,4.9.6v65.6l5.2.6.2,9.8,5,.2.6,4.8,4.6.6v24.4l-4.8.3-.2,4.8h-14.6v-9.5l5.1-.5-.2-15.1-5-.3-.2-70.9-5-.6-.6-4.7-4.6-.4-.5-4.8-4.7-.4-.5-4.7-4.9-.4c0-1.6.1-4.3-.9-4.7s-3.8,0-3.9-.8l-.5-4.2-10.2-.3-.4,5.3,4.9.6.5,4.6,4.4.3.6,4.8,5,.6v14l-5.1.4-.2,15.1-4.8.7-.7,4.6-4.1.5c-.8.1-.5,2.6-.5,4l-4.8,1.2-.6,4c-.1,1-3.3.6-4.3.3v-9.1c-.1,0,5-.7,5-.7.2-1.5.3-4.3,1.4-4.5s2.9-.3,3.6-.7.4-2.4.5-4.1l5.1-.6v-15.4l-5-.6v-9.4l-5.1-.7-.3-9.8-5.1-.6v-14.7l-4.8-.5-.5-4.6-4.5-.4-.5-4.7-5.1-.6-.5-4.7-9.8-.2v-14.8c-.1,0-5-.5-5-.5l-.3-5h-10.4l-.6,5.1h-14.9l-.6,4.6-4.6.8v9.6c-.1,0-5.2.4-5.2.4l-.3,4.9h-24.8l-.8,5.2c-1.7,0-3.3,0-4.1.4s-.6,2.7-.7,4.3l-4.7.8-.6,4.5h-9.3l-.8,5.2h-13.6c0,0-1.1-4.5-1.1-4.5l-4.7-.8-.4-9.7-10-.5c0-1.8.4-4.3-.5-4.7s-3.2-.3-4.2,0-.7,2.4-.8,4.3l-5.1.9v19.8c-.1,0-5.2.6-5.2.6v15.2l4.7.5.7,4.8,4.6.6.4,14.9,4.3.5c.8,0,.7,2.4.7,4.1l4.7.9.6,4.5,4.7.5.4,4.8,4.6.2.4,4.7,4.7.4.7,4.9,4,.5c1,.1.6,3,.7,4.3l4.7.6.6,4.8,9.7.5.5,4.3c.1.8,2.6.5,4.1.6.2.7.5,2.6.7,4.6l9.8.4.4,4.9,4.2.7c.9.2.4,2.1.6,4.1l10.1.4.8,5.2h9.4c0,.1.5,4.9.5,4.9l4.7.4.3,9.9c1.5.3,5.1.5,5.3-.7l.7-3.7c.2-.8,2.9-.5,3.9-.8s1-2.6,1.1-4.4l4.7-.7.4-10,10-.2.2-9.7,4.6-.6.6-4.4,4.9-.6.7-4.7c1.6,0,3.7.1,4.2-.5s.5-2.6.5-4.5l5-.7.4-3.9c0-.8,2.6-.6,3.8-.8.5-.4.9-2.9,1.1-4.3s3-.9,4.2-.4l.2,9.1-5.1.7-.4,4.6-4.1.6c-1,.1-.7,3.1-.7,4.4l-5.1.7-.2,9.6-4.7.5-.4,4.8-5,.4v9.5l-5.2.4v14.9l-4.9.5-.4,4.8h-19.3c0,.1-.9-4.8-.9-4.8l-9.6-.4-.6-4.7-4.7-.3-.5-5.1h-9.7l-.5-9.7-4.7-.5-.4-4.8-9.8-.2-.4-4.8-4.5-.2-.6-5.1-9.4-.2-.6-4.8-9.7-.2-.7-4.7-4.3-.5-.6-4.6-5-.5-.2-4.4-4.6-.7-.5-4.7-4.5-.5c-.2-1.4-.4-3.4-.8-4.2s-2.5-.6-4.2-.7l-.7-4.6-4.3-.7-.7-4.4-4.9-.7-.2-9.6-4.7-1v-49.7c-1.3-1-4.5-1-5.7-.2v9.2c-.1,0-5.1.6-5.1.6l-.2,9.5-4.8.7-.2,9.9-5.1.5-.2,9.6-4.7.5-.4,9.8-4.9.3-.2,4.9-4.9.5-.2,19.7-4.7.4v14.9c0,0-5.4.7-5.4.7v14.7l-5,.5v25.2c0,0-22.7.1-22.7.1l-.3-4.4,4.9-.8v-3.5c0-.8,1.8-1.2,3.2-1.7l.2-9.4,4.8-.6.4-4.2,4.9-.6v-9.6l5.1-.8v-19.6l4.9-.9v-14.7c0,0,5.2-.6,5.2-.6v-40h-.1ZM396.8,71.9c-.8-.9-3.9-.6-4.7,0-.5,1.2-.7,4.2.3,4.6s3.4.3,4.4,0,.9-3.6,0-4.5h0ZM412.4,96.7c.7-.9.8-4.5-.3-4.7s-3.4-.3-4.5,0-.8,3.7-.4,4.8,4.3,1,5.2,0h0Z"/>
-        <path d="M181.9,56l-.4,4.9h-4.3l-.2-9.8,9.2.3c.3,1.3.8,3.6.2,4.2s-2.3.4-4.6.4h.1Z"/>
-        <path d="M147.1,61c-1-1.1-.8-4.3.3-4.4l3.5-.5c.8,0,.5-2.7.6-3.9s3.5-1.2,4.5-.5v9.3h-9,0Z"/>
-        <rect x="144" y="24" width="8" height="8"/>
-        <rect x="112" y="55.9" width="8" height="8" transform="translate(-1.4 2.9) rotate(-1.4)"/>
-        <rect x="200" y="48.1" width="8" height="8" transform="translate(-.2 .7) rotate(-.2)"/>
-        <rect x="168" y="24" width="8" height="8"/>
-        <rect x="313" y="25.2" width="8" height="8" transform="translate(286.7 346.1) rotate(-89.8)"/>
-        <path d="M140.7,24c0,.9-1.8,1.6-2.5,1.4s-2-1.1-2.1-1.8c-.2-1.1.5-3.5,1.4-3.3l2.7.4c.6,0,.5,2.3.6,3.4h0Z"/>
-        <rect x="168.5" y="41.6" width="8" height="8" transform="translate(124.2 217.4) rotate(-89.1)"/>
-        <rect x="88.2" y="95.9" width="8" height="8" transform="translate(-.9 .8) rotate(-.5)"/>
-        <rect x="186.5" y="56.2" width="8" height="8" transform="translate(130 250.6) rotate(-89.9)"/>
-        <rect x="184" y="64" width="8" height="8"/>
-        <rect x="239.8" y="51" width="8" height="8" transform="translate(186.7 298.3) rotate(-89.5)"/>
-        <rect x="160" y="32" width="8" height="8" transform="translate(-.9 4.3) rotate(-1.5)"/>
-        <rect x="186.1" y="30.6" width="8" height="8" transform="translate(154.5 224.5) rotate(-89.7)"/>
-        <rect x="104.1" y="64" width="8" height="8" transform="translate(-.4 .6) rotate(-.3)"/>
-        <rect x="144" y="31.9" width="8" height="8" transform="translate(-.3 1.3) rotate(-.5)"/>
-        <rect x="232" y="31.8" width="8" height="8" transform="translate(-.3 2.1) rotate(-.5)"/>
-        <rect x="97.8" y="59.8" width="8" height="8" transform="translate(37.2 165.1) rotate(-89.5)"/>
-        <rect x="320" y="32" width="8" height="8" transform="translate(-.5 5.1) rotate(-.9)"/>
-        <rect x="210.3" y="60.1" width="8" height="8" transform="translate(148.3 277.9) rotate(-89.5)"/>
-        <rect x="296" y="32" width="8" height="8"/>
-        <rect x="200" y="72" width="8" height="8"/>
-        <rect x="256" y="47.7" width="8" height="8" transform="translate(-.4 2.3) rotate(-.5)"/>
-        <rect x="72.1" y="104" width="8" height="8" transform="translate(-1.3 .9) rotate(-.7)"/>
-        <rect x="33.4" y="139" width="8" height="8" transform="translate(-105.8 179.4) rotate(-89.6)"/>
-        <rect x="308.9" y="35.6" width="8" height="8" transform="translate(268.3 351.8) rotate(-89.1)"/>
-        <rect x="247.1" y="38" width="8" height="8" transform="translate(206.9 292.7) rotate(-89.5)"/>
-        <rect x="200" y="56" width="8" height="8"/>
-        <rect x="240" y="55.8" width="8" height="8" transform="translate(-.5 2.1) rotate(-.5)"/>
-        <rect x="200" y="48" width="8" height="8"/>
-        <rect x="110.9" y="67.2" width="8" height="8" transform="translate(42.7 185.5) rotate(-89.5)"/>
-        <rect x="216.1" y="71.9" width="8" height="8" transform="translate(-1.4 4.2) rotate(-1.1)"/>
-        <path d="M315.4,46.9c.3-.7,2.9-.9,3.5-.4s.7,2.9.4,3.8-2.3.6-3.3.5-1-2.8-.6-3.9Z"/>
-        
-        <!-- 元々 .st0 だったパスに class="accent-part" を付与 -->
-        <path class="accent-part" d="M412.4,96.7c-.9,1-4.7,1.2-5.2,0s-.7-4.5.4-4.8,3.4-.2,4.5,0,1,3.9.3,4.7h0Z"/>
-        <path class="accent-part" d="M396.8,71.9c.8.9.9,4.1,0,4.5s-3.4.5-4.4,0-.8-3.4-.3-4.6c.8-.6,4-.8,4.7,0h0Z"/>
-      </g>
-    </svg>
-  </div>
+  <section id="hero">
+    <canvas id="vj-canvas" aria-hidden="true"></canvas>
 
+    <!-- SVGロゴ -->
+    <div class="dog_svg" id="dog_svg">
+      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 494.6 224.5">
+        <rect x="1159.9" y="-392.5" width="8" height="8" transform="translate(1523.8 784.5) rotate(-88.6)"/>
+        <g>
+          <path d="M120.8,103l4.8-.8.7-4.7,4.6-.3.4-5,4.4.2v9.4l-5.1.3-.2,5-5,.3.4,5.3c2.2.2,3.8.2,4.6.9s.5,3.7-.5,3.8l-4.4.3v10l5.5.3v-10l5.3-.5.2-9.4,4.5-.5.3-9.7,5-.5.2-9.9h4.7c0,0,.6-10.1.6-10.1l4.6-.2.3-4.9,4.6-.3,1-5.1c1.7,0,3.3-.2,4-.5s.5-2.2.6-3.6,4-1.5,4.5-.3l.2,9.3,5.1.2.6-5h4.1c0,0,.5,5,.5,5l5.2-.2.6-5h9.1l.2,4.4-5.4.8.5,5,5,.4.5,4.6,3.9.5c.8,0,.4,2.9.6,4s5.3,1.6,5.5,0l.4-3.5c0-.6,1.8-.7,2.7-.8l1.6-.2c1.1,0,.3-4.7,1.2-4.7l3-.3c.8,0,1,2,1,3.7s2.1,1.8,3.5,1.8c2.3,0,2.2-2.2,1.9-5.1l4.9-.5.3-4.9,4.9-.4.3-9.7c1-.4,4.1-.7,4.2.2l.4,4c.1,1,3,.4,4.1.5s1.4-2.3,1.2-3.9,2.3-1.4,3.4-1.2,1.1,2.3,1.3,4,3.7,1.3,5.4,1.1l.3-4.9,5-.4.3-4.8,4.8-.3.3-4.9,9.9-.4c.2-1.7.5-4,1.1-4.6l8.8-.2.6-5h9c0,0,.9,4.9.9,4.9l4.7.5.4,4.4,4.8.4.3,10.1h9.8l.7,4.9,4.6.5.2,9.8,4.9.5.4,4.8h5.3l.3-5.4-5.3-.2-.2-10-4.9-.3v-9.3h5v-15.5l5.3-.4v-9.6l15.1-.5c.3-1.4.3-3.8,0-5.4l-14.7-.2-.6-4.8h-9.7l-.4-5.2h-15.7l-.4,5.1h-10c0,.1-.2,4.9-.2,4.9h-14.8l-.6,5.4h-50.3l-.4-5.3-29.7-.2-.2-4.7-14.8-.2-.8-4.8-4.7-.6-.6-4.9h-14.5c-.3-2-.3-4.6-1.4-5s-4.4-.3-4.5.9l-.4,3.6c0,.9-4.4.4-4.5.9l-.4,1.9c-.1.6,0,2.8-.7,2.7h-3.4c-.8-.2-.2-2.8-.5-4s-4.3-1.2-5.5-.6l-.3,4.6-4.7.3-.3,4.9-5.1.4v4.6c-.1,0-5.1.5-5.1.5v14.9l-4.8.5-.4,4.6-4.9.5-.5,4.6-4.5.5-.4,4.9-4.8.4-.2,4.7-5,.6-.4,3.9c0,.8-2.7.6-3.9.8-.9.4-1.3,4.4-.2,5s3.3.5,4,1.1.3,3.9-.7,3.9h-6.9c0,0-.6,5.2-.6,5.2l-4.4.3-.4,4.8-5,.5-.3,4.4-4.9.5-.6,4.9-4,.5c-.8,0-.3,2.6-.6,4.1l-4.9.5-.4,4.8-4.5.4c-.3,1.5-.2,4.3.8,5.3h14.5c0,0,.5-4.9.5-4.9l5-.3v-9.8l4.2-.2,1.1,5.1,7.9-.7.3-14.4,4.1-.6.4,5,5.3.2v-5.1l-5-.3v-10c1.4,0,3.5-.3,4.1.4s.6,2.8.7,4.5l4.7.7.6,4c0,1,3,.6,4,.5s1.2-2.2,1.3-4.4l5-.5v-15.3c0,0,5.2-.4,5.2-.4l.2-9.9,4.8-.4.3-9.8h8.5c.7.2.8,2.9.7,3.6s-2,.9-3.7,1-1.4,2.9-1,4.2,2.4,1.2,4.7,1.2l.3,9.9h-3.5c-.9-.2-1.1-2.9-1.2-4.3-.4-.8-4.2-1.2-5-.2s-.5,4.2,0,4.6l4.7.7c.3,1.9-.2,4.3.7,4.5s3.3.3,4.2,0,.5-3,.6-4.5c.5-.4,3.7-.9,4.4,0s.3,4.1-.2,4.5c-1.7.2-3.3,0-3.9.8s-.8,3.2-.1,3.8,2.5.4,4.3.3l.2,10.4c-1.4,0-4.6-.3-4.8.8l-.8,3.8c-.2,1-3.9.2-3.9-.9v-8.6c-.1,0-5.1-.6-5.1-.6l-.3-10.1-5.6.3-.2,14.9-4.9.6v4.4c0,0-10.1.2-10.1.2l-.5,4.9-4.6.6-.2,9.4-4.3.6-.7-5.2h-4.9c0,0-.4,4.9-.4,4.9-.9.3-2.9.3-3,1.1l-.4,4.1-9.5.4-.8,4.9h-20.1c0,0-.2,9.7-.2,9.7l-5.1.7v19.6l-5.2.9-.2,14.8-4.8.7-.4,4.7h-9.2c0-.1-.2-14.6-.2-14.6h4.4l.2,4.7h5.7c0-3.7,0-7.4-.3-10.6-1.8,0-3.9,0-4.5-.7s-.6-4,.5-3.9c1.6.2,4.1.2,4.2-.8l.4-3.6c0-.9,2.9-.4,3.9-.7s1.4-5,0-5.5-3.7,0-3.8-.8l-.2-3.7c0-1,2.3-.7,4.3-.7l.5-4.6,5.3-.3.5-10.2-5.9-.2-.5,4.9-9.8.3-.4,4.9-4.7.2-.3,9.8-4.9.5-.2,10-4.9.3-.4,4.8-4.2.5c-1,.1-.7,3.2-.5,4.8h-4.8l-.6,4.8-4.6.2-.6,5.3c-1.8,0-3.9-.2-4.4.7s-.6,3.2,0,4,3,.7,4,.5,1.2-3,1.1-4.9c1.1,0,4.7.3,5-1s.6-2.8.8-3.6,2.2-.6,4-.8l.6-4.5,4.9-.6.3-4.9,5.1-.2.2-5h4.4v9.6l-4.8.7-.6,4.4-4.7.5-.4,4.7-4.9.3c0,1.6.1,4.3-.9,4.6s-3.8,0-3.8.9l-.4,4.4H0v-14.5l5-.6.5-4.5,4.5-.4.6-4.7,4.7-.7.6-4.6,3.9-.5c.8-.1.7-2.5.8-4.1l5-.7.3-9.8,5-.5.2-9.9,4.8-.5.4-4.5,9.8-.3.5-5,9.7-.3.3-4.7,4.8-.4.4-4.7,4.6-.4.6-4.8,4.8-.5v-4.6c0,0,5-.5,5-.5l.4-4.4,4.7-.8.5-4.1c0-.8,2.8-.5,3.8-.9s1-3,1.1-4.6l4.8-.5.2-9.7c1-.4,2.6-.5,2.7-1.1l.5-4,4.4-.4.9-4.9,4.5-.5.6-4c0-1,2.8-.7,4.3-.8l1-4.8,4.4-.6v-14.8l4.9-.5.5-4.8,4.9-.4.2-9.9h9.8l.8-5h14.6l.4-5.3h19.3l.7,5.1,9.5.2.5,4.8,9.9.2.2,5.1,14.9.2.4,4.8h24.6l.8,5.3h40.8l.8-5.2h9.5l.5-4.8h14.8c0-.1.7-5.4.7-5.4h24.6l.4,5.3h9.9l.6,4.8,19.9.2.5,5.1h15c0,.1.6,5,.6,5l4.6.5.6,4.8h9.8c0,0,.6,5,.6,5l3.9.5c1,0,.7,3,.8,4.4l4.9.9.5,4.4,4.8.5.2,15,5,.3v14.9c.1,0,5.2.6,5.2.6l.3,4.4,4.8.5v9.6l5.1.9.2,9.7,10.2.3.2,4.8,4.8.6.5,4.4,14.9.2.5,5.1h20.7l.7-5.1h19.4l.2,9.5-10.1.3-.6,5.1h-50.1l-.9-5-4-.5-.9-4.5-9.7-.3-.5-4.7-4.6-.6-.4-4.6-5-.4-.4-4.8h-14.8l-.5-5-4.9-.6v-19.5l-5.1-1-.3-19.7-4.8-.6-.3-9.8-4.9-.7-.5-4c-.1-.9-2.8-.6-4.4-.7l-.6-5.1h-4.6l-.8-5.2h-25.8l-.3,25.5-4.4.7c-.9,0-.4,3.1-.3,4s2.5,1,4.7,1l.2,15.1,4.9.8.5,4c.1,1,2.9.7,4.4.7l.8,4.9,9.6.3.3,4.9,4.8.4.6,4.8,9.9.3.5,4.7,4.9.6v65.6l5.2.6.2,9.8,5,.2.6,4.8,4.6.6v24.4l-4.8.3-.2,4.8h-14.6v-9.5l5.1-.5-.2-15.1-5-.3-.2-70.9-5-.6-.6-4.7-4.6-.4-.5-4.8-4.7-.4-.5-4.7-4.9-.4c0-1.6.1-4.3-.9-4.7s-3.8,0-3.9-.8l-.5-4.2-10.2-.3-.4,5.3,4.9.6.5,4.6,4.4.3.6,4.8,5,.6v14l-5.1.4-.2,15.1-4.8.7-.7,4.6-4.1.5c-.8.1-.5,2.6-.5,4l-4.8,1.2-.6,4c-.1,1-3.3.6-4.3.3v-9.1c-.1,0,5-.7,5-.7.2-1.5.3-4.3,1.4-4.5s2.9-.3,3.6-.7.4-2.4.5-4.1l5.1-.6v-15.4l-5-.6v-9.4l-5.1-.7-.3-9.8-5.1-.6v-14.7l-4.8-.5-.5-4.6-4.5-.4-.5-4.7-5.1-.6-.5-4.7-9.8-.2v-14.8c-.1,0-5-.5-5-.5l-.3-5h-10.4l-.6,5.1h-14.9l-.6,4.6-4.6.8v9.6c-.1,0-5.2.4-5.2.4l-.3,4.9h-24.8l-.8,5.2c-1.7,0-3.3,0-4.1.4s-.6,2.7-.7,4.3l-4.7.8-.6,4.5h-9.3l-.8,5.2h-13.6c0,0-1.1-4.5-1.1-4.5l-4.7-.8-.4-9.7-10-.5c0-1.8.4-4.3-.5-4.7s-3.2-.3-4.2,0-.7,2.4-.8,4.3l-5.1.9v19.8c-.1,0-5.2.6-5.2.6v15.2l4.7.5.7,4.8,4.6.6.4,14.9,4.3.5c.8,0,.7,2.4.7,4.1l4.7.9.6,4.5,4.7.5.4,4.8,4.6.2.4,4.7,4.7.4.7,4.9,4,.5c1,.1.6,3,.7,4.3l4.7.6.6,4.8,9.7.5.5,4.3c.1.8,2.6.5,4.1.6.2.7.5,2.6.7,4.6l9.8.4.4,4.9,4.2.7c.9.2.4,2.1.6,4.1l10.1.4.8,5.2h9.4c0,.1.5,4.9.5,4.9l4.7.4.3,9.9c1.5.3,5.1.5,5.3-.7l.7-3.7c.2-.8,2.9-.5,3.9-.8s1-2.6,1.1-4.4l4.7-.7.4-10,10-.2.2-9.7,4.6-.6.6-4.4,4.9-.6.7-4.7c1.6,0,3.7.1,4.2-.5s.5-2.6.5-4.5l5-.7.4-3.9c0-.8,2.6-.6,3.8-.8.5-.4.9-2.9,1.1-4.3s3-.9,4.2-.4l.2,9.1-5.1.7-.4,4.6-4.1.6c-1,.1-.7,3.1-.7,4.4l-5.1.7-.2,9.6-4.7.5-.4,4.8-5,.4v9.5l-5.2.4v14.9l-4.9.5-.4,4.8h-19.3c0,.1-.9-4.8-.9-4.8l-9.6-.4-.6-4.7-4.7-.3-.5-5.1h-9.7l-.5-9.7-4.7-.5-.4-4.8-9.8-.2-.4-4.8-4.5-.2-.6-5.1-9.4-.2-.6-4.8-9.7-.2-.7-4.7-4.3-.5-.6-4.6-5-.5-.2-4.4-4.6-.7-.5-4.7-4.5-.5c-.2-1.4-.4-3.4-.8-4.2s-2.5-.6-4.2-.7l-.7-4.6-4.3-.7-.7-4.4-4.9-.7-.2-9.6-4.7-1v-49.7c-1.3-1-4.5-1-5.7-.2v9.2c-.1,0-5.1.6-5.1.6l-.2,9.5-4.8.7-.2,9.9-5.1.5-.2,9.6-4.7.5-.4,9.8-4.9.3-.2,4.9-4.9.5-.2,19.7-4.7.4v14.9c0,0-5.4.7-5.4.7v14.7l-5,.5v25.2c0,0-22.7.1-22.7.1l-.3-4.4,4.9-.8v-3.5c0-.8,1.8-1.2,3.2-1.7l.2-9.4,4.8-.6.4-4.2,4.9-.6v-9.6l5.1-.8v-19.6l4.9-.9v-14.7c0,0,5.2-.6,5.2-.6v-40h-.1ZM396.8,71.9c-.8-.9-3.9-.6-4.7,0-.5,1.2-.7,4.2.3,4.6s3.4.3,4.4,0,.9-3.6,0-4.5h0ZM412.4,96.7c.7-.9.8-4.5-.3-4.7s-3.4-.3-4.5,0-.8,3.7-.4,4.8,4.3,1,5.2,0h0Z"/>
+          <path d="M181.9,56l-.4,4.9h-4.3l-.2-9.8,9.2.3c.3,1.3.8,3.6.2,4.2s-2.3.4-4.6.4h.1Z"/>
+          <path d="M147.1,61c-1-1.1-.8-4.3.3-4.4l3.5-.5c.8,0,.5-2.7.6-3.9s3.5-1.2,4.5-.5v9.3h-9,0Z"/>
+          <rect x="144" y="24" width="8" height="8"/>
+          <rect x="112" y="55.9" width="8" height="8" transform="translate(-1.4 2.9) rotate(-1.4)"/>
+          <rect x="200" y="48.1" width="8" height="8" transform="translate(-.2 .7) rotate(-.2)"/>
+          <rect x="168" y="24" width="8" height="8"/>
+          <rect x="313" y="25.2" width="8" height="8" transform="translate(286.7 346.1) rotate(-89.8)"/>
+          <path d="M140.7,24c0,.9-1.8,1.6-2.5,1.4s-2-1.1-2.1-1.8c-.2-1.1.5-3.5,1.4-3.3l2.7.4c.6,0,.5,2.3.6,3.4h0Z"/>
+          <rect x="168.5" y="41.6" width="8" height="8" transform="translate(124.2 217.4) rotate(-89.1)"/>
+          <rect x="88.2" y="95.9" width="8" height="8" transform="translate(-.9 .8) rotate(-.5)"/>
+          <rect x="186.5" y="56.2" width="8" height="8" transform="translate(130 250.6) rotate(-89.9)"/>
+          <rect x="184" y="64" width="8" height="8"/>
+          <rect x="239.8" y="51" width="8" height="8" transform="translate(186.7 298.3) rotate(-89.5)"/>
+          <rect x="160" y="32" width="8" height="8" transform="translate(-.9 4.3) rotate(-1.5)"/>
+          <rect x="186.1" y="30.6" width="8" height="8" transform="translate(154.5 224.5) rotate(-89.7)"/>
+          <rect x="104.1" y="64" width="8" height="8" transform="translate(-.4 .6) rotate(-.3)"/>
+          <rect x="144" y="31.9" width="8" height="8" transform="translate(-.3 1.3) rotate(-.5)"/>
+          <rect x="232" y="31.8" width="8" height="8" transform="translate(-.3 2.1) rotate(-.5)"/>
+          <rect x="97.8" y="59.8" width="8" height="8" transform="translate(37.2 165.1) rotate(-89.5)"/>
+          <rect x="320" y="32" width="8" height="8" transform="translate(-.5 5.1) rotate(-.9)"/>
+          <rect x="210.3" y="60.1" width="8" height="8" transform="translate(148.3 277.9) rotate(-89.5)"/>
+          <rect x="296" y="32" width="8" height="8"/>
+          <rect x="200" y="72" width="8" height="8"/>
+          <rect x="256" y="47.7" width="8" height="8" transform="translate(-.4 2.3) rotate(-.5)"/>
+          <rect x="72.1" y="104" width="8" height="8" transform="translate(-1.3 .9) rotate(-.7)"/>
+          <rect x="33.4" y="139" width="8" height="8" transform="translate(-105.8 179.4) rotate(-89.6)"/>
+          <rect x="308.9" y="35.6" width="8" height="8" transform="translate(268.3 351.8) rotate(-89.1)"/>
+          <rect x="247.1" y="38" width="8" height="8" transform="translate(206.9 292.7) rotate(-89.5)"/>
+          <rect x="200" y="56" width="8" height="8"/>
+          <rect x="240" y="55.8" width="8" height="8" transform="translate(-.5 2.1) rotate(-.5)"/>
+          <rect x="200" y="48" width="8" height="8"/>
+          <rect x="110.9" y="67.2" width="8" height="8" transform="translate(42.7 185.5) rotate(-89.5)"/>
+          <rect x="216.1" y="71.9" width="8" height="8" transform="translate(-1.4 4.2) rotate(-1.1)"/>
+          <path d="M315.4,46.9c.3-.7,2.9-.9,3.5-.4s.7,2.9.4,3.8-2.3.6-3.3.5-1-2.8-.6-3.9Z"/>
+          <!-- くり抜きの白目パーツなど -->
+          <path class="accent-part" d="M412.4,96.7c-.9,1-4.7,1.2-5.2,0s-.7-4.5.4-4.8,3.4-.2,4.5,0,1,3.9.3,4.7h0Z"/>
+          <path class="accent-part" d="M396.8,71.9c.8.9.9,4.1,0,4.5s-3.4.5-4.4,0-.8-3.4-.3-4.6c.8-.6,4-.8,4.7,0h0Z"/>
+        </g>
+      </svg>
+    </div>
+    <h1 class="hero-title">Ungrateful Dog Lab.</h1>
+  </section>
+
+  <footer>
+    <p class="footer-name">Shinichi Arita</p>
+    <nav class="footer-links">
+      <a href="https://x.com/Beerbear_A" class="footer-link" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        X (Twitter)
+      </a>
+      <a href="https://note.com/beerbear_a" class="footer-link" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v16l4-4h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 12H7v-2h5v2zm5-4H7V9h10v2z"/></svg>
+        Note
+      </a>
+    </nav>
+    <p class="footer-copy">&copy; 2025 Ungrateful Dog Lab.</p>
+  </footer>
+
+  <!-- 1. 背景のVJ Canvasアニメーション -->
+  <script>
+    {
+      const φ  = 1.6180339887;
+      const φ2 = φ * φ;
+      const GA = Math.PI * 2 / φ2;
+      const FIB_SIDES = [3, 5, 8, 5, 3, 8];
+
+      const canvas = document.getElementById('vj-canvas');
+      const ctx    = canvas.getContext('2d');
+      let W, H, DPR;
+
+      function resize() {
+        DPR = window.devicePixelRatio || 1;
+        const r = canvas.getBoundingClientRect();
+        W = r.width; H = r.height;
+        canvas.width  = W * DPR;
+        canvas.height = H * DPR;
+        ctx.scale(DPR, DPR);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      const NOISE_STEP = 0.08;
+      function noise(x, t, seed = 0) {
+        const qt = Math.floor(t / NOISE_STEP) * NOISE_STEP;
+        let wave = Math.sin(x * 5.1 + qt * 1.7 + seed) * 0.40;
+        wave += ((x * 12.3 - qt * 3.1 + seed) % 2 - 1) * 0.30;
+        wave += Math.sign(Math.sin(x * 25.0 + qt * 8.0 + seed)) * 0.15;
+        const levels = 6;
+        return Math.floor(wave * levels) / levels;
+      }
+
+      function drawGrid(sec) {
+        const CELL = 60;
+        const ox   = (sec * 4) % CELL;
+        const oy   = (sec * 3) % CELL;
+        ctx.strokeStyle = 'rgba(167,232,246,0.10)';
+        ctx.lineWidth   = 0.4;
+        ctx.lineJoin = 'miter';
+        ctx.miterLimit = 10;
+
+        for (let bx = -CELL + (W % CELL) / 2 - ox; bx < W + CELL; bx += CELL) {
+          ctx.beginPath();
+          for (let y = 0; y <= H; y += 8) {
+            const x = bx + 2.5 * noise(y / H, sec * 0.6, bx);
+            y === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+        for (let by = -CELL + (H % CELL) / 2 - oy; by < H + CELL; by += CELL) {
+          ctx.beginPath();
+          for (let x = 0; x <= W; x += 8) {
+            const y = by + 2.5 * noise(x / W, sec * 0.5, by);
+            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+      }
+
+      const rings = [];
+      const ALL_SIDES = [4, 5, 6, 7, 8, 9, 10, 12];
+
+      function spawnBurst(ox, oy, sec) {
+        const N         = 3 + Math.floor(Math.random() * 6);
+        const baseScale = 0.12 + Math.random() * 0.50;
+        const stagger   = 0.12 + Math.random() * 0.25;
+        const lifeBase  = 3.0 + Math.random() * 3.0;
+        const dirBias   = Math.random() < 0.5 ? 1 : -1;
+        const burstSides = ALL_SIDES[Math.floor(Math.random() * ALL_SIDES.length)];
+
+        for (let i = 0; i < N; i++) {
+          const shift = Math.floor(Math.random() * 3) - 1;
+          const sides = Math.max(4, Math.min(12, burstSides + shift));
+          rings.push({
+            ox, oy,
+            born:     sec + i * stagger,
+            life:     lifeBase * (0.7 + Math.random() * 0.6),
+            maxR:     Math.min(W, H) * (baseScale + i * (0.07 + Math.random() * 0.08)),
+            sides,
+            rot:      Math.random() * Math.PI * 2,
+            rotSpeed: (0.02 + Math.random() * 0.08) * dirBias * (Math.random() < 0.3 ? -1 : 1),
+            accent:   Math.random() < 0.65,
+            seed:     Math.random() * 200,
+          });
+        }
+      }
+
+      function drawRing(ring, sec) {
+        const age = sec - ring.born;
+        if (age < 0)  return true; 
+        const p = age / ring.life;
+        if (p >= 1)   return false; 
+
+        const r    = ring.maxR * p;
+        const a    = Math.pow(Math.sin(p * Math.PI), 0.48) * 0.85;
+        const rot  = ring.rot + ring.rotSpeed * sec;
+        const nAmp = r * 0.04; 
+
+        ctx.lineWidth   = 0.6;
+        ctx.strokeStyle = ring.accent ? `rgba(167,232,246,${a})` : `rgba(66,64,61,${a * 0.52})`;
+        ctx.lineJoin = 'miter';
+        ctx.miterLimit = 10;
+
+        ctx.beginPath();
+        let first = true;
+
+        for (let s = 0; s < ring.sides; s++) {
+          const θ0  = (s        / ring.sides) * Math.PI * 2 + rot;
+          const θ1  = ((s + 1) / ring.sides) * Math.PI * 2 + rot;
+          const v0x = ring.ox + r * Math.cos(θ0);
+          const v0y = ring.oy + r * Math.sin(θ0);
+          const v1x = ring.ox + r * Math.cos(θ1);
+          const v1y = ring.oy + r * Math.sin(θ1);
+
+          const eLen = Math.hypot(v1x - v0x, v1y - v0y);
+          const ex   = (v1x - v0x) / eLen;
+          const ey   = (v1y - v0y) / eLen;
+          const px   = -ey, py = ex;  
+
+          const SEGS = Math.max(4, Math.ceil(eLen / (8 / φ)));
+          for (let j = 0; j <= SEGS; j++) {
+            const t  = j / SEGS;
+            const d  = nAmp * noise(s * φ + t * φ2, sec * 1.5, ring.seed);
+            const x  = v0x + t * (v1x - v0x) + px * d;
+            const y  = v0y + t * (v1y - v0y) + py * d;
+            first ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            first = false;
+          }
+        }
+        ctx.closePath();
+        ctx.stroke();
+        return true;
+      }
+
+      function randomOrigin() {
+        return { x: W * (0.1 + Math.random() * 0.8), y: H * (0.1 + Math.random() * 0.8) };
+      }
+
+      const hero = document.getElementById('hero');
+      hero.addEventListener('click', e => {
+        const r = canvas.getBoundingClientRect();
+        spawnBurst(e.clientX - r.left, e.clientY - r.top, performance.now() / 1000);
+      });
+
+      let nextAuto = 0;
+      const AUTO_INTERVAL = 1.5; 
+      { const o = randomOrigin(); spawnBurst(o.x, o.y, 0.01); }
+
+      function draw(t) {
+        const sec = t / 1000;
+        if (sec >= nextAuto) {
+          const o = randomOrigin(); spawnBurst(o.x, o.y, sec);
+          nextAuto = sec + AUTO_INTERVAL + Math.random() * 0.8;
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, W, H);
+        drawGrid(sec);
+        for (let i = rings.length - 1; i >= 0; i--) {
+          if (!drawRing(rings[i], sec)) rings.splice(i, 1);
+        }
+      }
+
+      function loop(t) { draw(t); requestAnimationFrame(loop); }
+      requestAnimationFrame(loop);
+    }
+  </script>
+
+  <!-- 2. SVGをクリックで粉砕するアニメーション -->
+  <script>
+    window.addEventListener('load', () => {
+      const wrapper = document.getElementById('dog_svg');
+      // SVG内のすべての描画要素を取得
+      const rawParts = wrapper.querySelectorAll('rect, path');
+      
+      let isCrumbling = false;
+      let particles = [];
+
+      rawParts.forEach(part => {
+        // SVG由来のtransformを崩さないように、動かすための専用の<g>タグで各パーツを包む
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.classList.add('particle');
+        part.parentNode.insertBefore(g, part);
+        g.appendChild(part);
+
+        const bbox = part.getBBox();
+        const cx = bbox.x + bbox.width / 2;
+        const cy = bbox.y + bbox.height / 2;
+        g.style.transformOrigin = `${cx}px ${cy}px`;
+
+        particles.push({
+          element: g,
+          x: 0, y: 0, rot: 0,
+          vx: 0, vy: 0, vRot: 0,
+          opacity: 1,
+          friction: 0.96 + Math.random() * 0.03
+        });
+      });
+
+      function animateCrumble() {
+        let activeParticles = false;
+
+        particles.forEach(p => {
+          p.vx *= p.friction;
+          p.vy *= p.friction;
+          p.vRot *= p.friction;
+
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vRot;
+          
+          p.opacity -= 0.004;
+          if (p.opacity < 0) p.opacity = 0;
+
+          p.element.style.transform = `translate(${p.x}px, ${p.y}px) rotate(${p.rot}deg)`;
+          p.element.style.opacity = p.opacity;
+
+          if (p.opacity > 0 && (Math.abs(p.vx) > 0.01 || Math.abs(p.vy) > 0.01)) {
+            activeParticles = true;
+          }
+        });
+
+        if (activeParticles) {
+          requestAnimationFrame(animateCrumble);
+        } else {
+          // アニメーションが終わったら要素を非表示にしておく
+          wrapper.style.display = 'none';
+        }
+      }
+
+      wrapper.addEventListener('click', (e) => {
+        if (isCrumbling) return;
+        isCrumbling = true;
+
+        // クリックした瞬間に色を固定（ホバーが外れて色が変わるのを防ぐため）
+        const currentColor = getComputedStyle(wrapper).color;
+        wrapper.style.color = currentColor;
+
+        const r = wrapper.getBoundingClientRect();
+        const clickX = e.clientX - r.left;
+        const clickY = e.clientY - r.top;
+
+        const svgWidth = 494.6;  // viewBoxの幅
+        const svgHeight = 224.5; // viewBoxの高さ
+
+        const clickInSvgX = (clickX / r.width) * svgWidth;
+        const clickInSvgY = (clickY / r.height) * svgHeight;
+
+        particles.forEach((p, index) => {
+          // 元のパーツのBBoxを再度取得して中心を計算
+          const bbox = p.element.firstElementChild.getBBox();
+          const cx = bbox.x + bbox.width / 2;
+          const cy = bbox.y + bbox.height / 2;
+          
+          let dx = cx - clickInSvgX;
+          let dy = cy - clickInSvgY;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist > 0) {
+            dx /= dist;
+            dy /= dist;
+          } else {
+            const angle = Math.random() * Math.PI * 2;
+            dx = Math.cos(angle);
+            dy = Math.sin(angle);
+          }
+
+          // 弾け飛ぶ力の計算（中心に近いほど強く）
+          const baseSpeed = (Math.random() * 15) + 5;
+          const speedFactor = 1 + (150 / (dist + 30));
+
+          p.vx = (dx * baseSpeed * speedFactor) + (Math.random() - 0.5) * 4;
+          p.vy = (dy * baseSpeed * speedFactor) + (Math.random() - 0.5) * 4;
+          p.vRot = (Math.random() - 0.5) * 30;
+        });
+
+        animateCrumble();
+      });
+    });
+  </script>
 </body>
 </html>
