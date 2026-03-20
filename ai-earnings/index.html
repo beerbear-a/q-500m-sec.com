@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>【衝撃】AIが今この瞬間も稼ぎ続けています</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #00ff41;
+      font-family: 'Courier New', monospace;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    #matrix { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; opacity:0.12; }
+
+    /* Confetti canvas */
+    #confetti { position: fixed; top:0; left:0; width:100%; height:100%; z-index:5; pointer-events:none; }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 60px;
+    }
+
+    /* URGENT BANNER */
+    .urgent-banner {
+      width: 100%;
+      background: linear-gradient(90deg, #ff0000, #ff6600, #ff0000);
+      background-size: 200% 100%;
+      animation: urgentSlide 1.5s linear infinite;
+      color: #fff;
+      font-weight: 900;
+      font-size: 13px;
+      text-align: center;
+      padding: 8px;
+      letter-spacing: 2px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+    @keyframes urgentSlide {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    /* LIVE viewers */
+    .live-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 50px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: #666;
+    }
+    .live-dot {
+      width: 8px; height: 8px;
+      background: #ff0040;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #ff0040;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+    h1 {
+      font-size: clamp(18px, 4vw, 38px);
+      text-align: center;
+      color: #fff;
+      text-shadow: 0 0 30px #ff8c00, 0 0 60px #ff4500;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .h1-accent { color: #ffff00; text-shadow: 0 0 20px #ffff00; }
+
+    .subtitle {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    /* === MAIN CARD === */
+    .earnings-card {
+      background: radial-gradient(ellipse at center, rgba(255,100,0,0.08) 0%, rgba(0,0,0,0) 70%);
+      border: 2px solid #ff4500;
+      border-radius: 20px;
+      padding: 36px 50px;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(255,69,0,0.3), 0 0 120px rgba(255,69,0,0.1), inset 0 0 40px rgba(255,69,0,0.05);
+      margin-bottom: 20px;
+      min-width: min(92vw, 600px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .earnings-card::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: conic-gradient(transparent 0deg, rgba(255,150,0,0.04) 90deg, transparent 180deg);
+      animation: rotate 4s linear infinite;
+    }
+    @keyframes rotate { to { transform: rotate(360deg); } }
+
+    .earnings-label {
+      font-size: 11px;
+      color: #888;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .earnings-amount {
+      font-size: clamp(40px, 9vw, 78px);
+      font-weight: 900;
+      color: #ffdd00;
+      text-shadow: 0 0 40px #ff8c00, 0 0 80px #ff4500;
+      letter-spacing: -2px;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+      transition: all 0.05s;
+    }
+
+    .earnings-amount.mega-flash {
+      color: #fff;
+      text-shadow: 0 0 80px #fff, 0 0 160px #fff;
+      transform: scale(1.04);
+    }
+
+    .usd-note {
+      font-size: 14px;
+      color: #ff8c00;
+      margin-bottom: 10px;
+      font-weight: bold;
+      position: relative;
+      z-index: 1;
+    }
+
+    .per-second {
+      font-size: 13px;
+      color: #00ff41;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* rank badge */
+    .rank-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #000;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 14px;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 1;
+      animation: rankPulse 0.8s ease infinite;
+    }
+    @keyframes rankPulse {
+      0%,100% { box-shadow: 0 0 10px #ffd700; }
+      50%      { box-shadow: 0 0 30px #ffd700, 0 0 60px #ff8c00; }
+    }
+
+    /* === STATS GRID === */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: min(92vw, 600px);
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #1a1a00;
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top:0; left:0; right:0; height: 2px;
+      background: linear-gradient(90deg, #ff4500, #ffd700, #ff4500);
+      background-size: 200% 100%;
+      animation: shimmer 2s linear infinite;
+    }
+    @keyframes shimmer { to { background-position: 200% 0; } }
+
+    .stat-value { font-size: 20px; font-weight: 700; color: #ffd700; }
+    .stat-label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* === POPUP NOTIFICATIONS === */
+    #popup-area {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .popup {
+      background: rgba(0,0,0,0.95);
+      border: 1px solid #ffd700;
+      border-left: 4px solid #ffd700;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 12px;
+      color: #ffd700;
+      max-width: 260px;
+      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+      animation: slideIn 0.3s ease, fadeOut 0.5s ease 3.5s forwards;
+    }
+    .popup .name { color: #fff; font-weight: bold; }
+    .popup .amount { color: #00ff41; font-weight: bold; }
+
+    @keyframes slideIn { from { transform: translateX(120%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+    @keyframes fadeOut { to { opacity:0; transform: translateX(120%); } }
+
+    /* === MILESTONE OVERLAY === */
+    #milestone {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.85);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #milestone.show { opacity: 1; pointer-events: all; }
+    .milestone-inner {
+      text-align: center;
+      padding: 40px;
+      border: 3px solid #ffd700;
+      border-radius: 20px;
+      background: rgba(0,0,0,0.9);
+      box-shadow: 0 0 80px #ffd700;
+      animation: milestonePop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    @keyframes milestonePop { from { transform: scale(0.3) rotate(-5deg); } to { transform: scale(1) rotate(0deg); } }
+    .milestone-emoji { font-size: 60px; margin-bottom: 10px; }
+    .milestone-text { font-size: 28px; font-weight: 900; color: #ffd700; text-shadow: 0 0 30px #ffd700; }
+    .milestone-sub { font-size: 14px; color: #888; margin-top: 8px; }
+
+    /* === LOG BOX === */
+    .log-box {
+      width: min(92vw, 600px);
+      background: rgba(0,0,0,0.8);
+      border: 1px solid #1a1a00;
+      border-radius: 12px;
+      padding: 14px;
+      height: 180px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .log-box::before {
+      content: '◉ LIVE';
+      position: absolute; top:10px; right:14px;
+      font-size: 10px; color: #ff0040;
+      animation: blink 1s infinite;
+    }
+    .log-line { font-size: 11px; color: #4a8040; line-height: 1.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .log-line .amount { color: #ffd700; font-weight: bold; }
+    .log-line .tag { color: #ff8c00; }
+    .log-line .big { color: #ff4500; font-weight: bold; font-size: 12px; }
+
+    /* === GOAL BAR === */
+    .goal-section { width: min(92vw, 600px); margin-bottom: 20px; }
+    .goal-label { display:flex; justify-content:space-between; font-size:11px; color:#666; margin-bottom:6px; }
+    .progress-bar { height: 10px; background:#111; border-radius:5px; overflow:hidden; border:1px solid #1a1a00; }
+    .progress-fill {
+      height:100%;
+      background: linear-gradient(90deg, #ff4500, #ffd700, #00ff41);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s linear infinite;
+      border-radius:5px;
+      box-shadow: 0 0 12px #ffd700;
+      transition: width 0.3s ease;
+    }
+
+    /* === HYPE TEXT === */
+    .hype-box {
+      width: min(92vw, 600px);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .hype-msg {
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 0 10px #ff8c00;
+      line-height: 2;
+    }
+    .hype-msg span { color: #ffdd00; }
+
+    /* AI Models */
+    .ai-models { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:20px; }
+    .model-tag {
+      background: rgba(255,165,0,0.1);
+      border: 1px solid rgba(255,165,0,0.3);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 10px;
+      color: #ffa500;
+    }
+
+    .disclaimer { font-size: 9px; color: #1a1a1a; text-align:center; max-width:500px; line-height:1.6; }
+
+    /* Scroll ticker */
+    .ticker-wrap {
+      width: 100%;
+      overflow: hidden;
+      background: rgba(255,69,0,0.1);
+      border-top: 1px solid #331100;
+      border-bottom: 1px solid #331100;
+      padding: 6px 0;
+      margin-bottom: 20px;
+    }
+    .ticker {
+      display: inline-block;
+      white-space: nowrap;
+      animation: ticker 20s linear infinite;
+      font-size: 11px;
+      color: #ff8c00;
+    }
+    @keyframes ticker { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
+  </style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+<canvas id="confetti"></canvas>
+
+<div class="urgent-banner">
+  🔥 緊急速報 — AIが今この瞬間も秒速5億円を稼ぎ続けています — 残り枠わずか — 今すぐ確認 🔥
+</div>
+
+<div id="popup-area"></div>
+
+<div id="milestone">
+  <div class="milestone-inner">
+    <div class="milestone-emoji" id="ms-emoji">🎉</div>
+    <div class="milestone-text" id="ms-text">100億達成！</div>
+    <div class="milestone-sub" id="ms-sub">AIはまだまだ止まりません</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="live-bar">
+    <span class="live-dot"></span>
+    <span>現在 <strong id="viewers" style="color:#fff">2,847</strong> 人がリアルタイムで羨ましがっています</span>
+  </div>
+
+  <h1>🤖 AIが<span class="h1-accent">今この瞬間</span>も<br>あなたの代わりに<span class="h1-accent">稼いでいます</span></h1>
+  <p class="subtitle">あなたが寝ている間も、食べている間も、AIは止まらない</p>
+
+  <div class="ai-models">
+    <span class="model-tag">⚡ Claude 3.5 Sonnet</span>
+    <span class="model-tag">⚡ GPT-4o</span>
+    <span class="model-tag">⚡ Gemini Ultra</span>
+    <span class="model-tag">⚡ LLaMA 3 x1000台</span>
+    <span class="model-tag">⚡ 自己進化AI</span>
+    <span class="model-tag">⚡ 量子AIエンジン</span>
+  </div>
+
+  <div class="earnings-card">
+    <div class="earnings-label">▶ 本日のAI総収益（リアルタイム）</div>
+    <div class="earnings-amount" id="earnings">¥0</div>
+    <div class="usd-note" id="usd-note">≈ $0 USD</div>
+    <div class="per-second">⚡ <span id="per-sec">500,000,000</span>円/秒 で加速中</div>
+    <div class="rank-badge" id="rank-badge">👑 ランク: 無職からの脱出</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="trades">0</div>
+      <div class="stat-label">AI自動取引数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="models-count">9,999</div>
+      <div class="stat-label">並列稼働AIモデル</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">99.97%</div>
+      <div class="stat-label">的中率（人間:50%）</div>
+    </div>
+  </div>
+
+  <div class="goal-section">
+    <div class="goal-label">
+      <span>本日の目標: ¥1兆円</span>
+      <span id="goal-pct">0.000000%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="ticker-wrap">
+    <span class="ticker" id="ticker">
+      ✅ 田中さん +¥3,200万 &nbsp;&nbsp;&nbsp; ✅ 鈴木さん +¥8,900万 &nbsp;&nbsp;&nbsp; ✅ 山田さん +¥1.2億 &nbsp;&nbsp;&nbsp; ✅ 佐藤さん +¥5,600万 &nbsp;&nbsp;&nbsp; ✅ 中村さん +¥2.4億 &nbsp;&nbsp;&nbsp; ✅ 加藤さん +¥7,700万 &nbsp;&nbsp;&nbsp; ✅ 吉田さん +¥3.1億 &nbsp;&nbsp;&nbsp;
+    </span>
+  </div>
+
+  <div class="log-box" id="log-box">
+    <div class="log-line">[ システム起動中... 全AIエンジン接続中... ]</div>
+  </div>
+
+  <div class="hype-box">
+    <div class="hype-msg" id="hype-msg">
+      今すぐ始めれば<span>あなたも</span>この恩恵を受けられます
+    </div>
+  </div>
+
+  <p class="disclaimer">
+    ※ このサイトはジョーク・風刺サイトです。実際にAIで秒速5億円を稼ぐことはできません。<br>
+    投資詐欺には十分ご注意ください。AIも人間も損します。
+  </p>
+</div>
+
+<script>
+/* ====== MATRIX ====== */
+(function() {
+  const c = document.getElementById('matrix');
+  const ctx = c.getContext('2d');
+  let drops;
+  function init() {
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    drops = Array(Math.floor(c.width/14)).fill(0);
+  }
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#ff4500'; ctx.font = '13px monospace';
+    drops.forEach((y,i) => {
+      ctx.fillText(String.fromCharCode(0x30A0 + Math.random()*96), i*14, y*14);
+      if (y*14 > c.height && Math.random() > 0.975) drops[i] = 0; else drops[i]++;
+    });
+  }
+  init(); window.addEventListener('resize', init); setInterval(draw, 55);
+})();
+
+/* ====== CONFETTI ====== */
+const confCanvas = document.getElementById('confetti');
+const cctx = confCanvas.getContext('2d');
+confCanvas.width = window.innerWidth; confCanvas.height = window.innerHeight;
+window.addEventListener('resize', () => { confCanvas.width = window.innerWidth; confCanvas.height = window.innerHeight; });
+
+let particles = [];
+function spawnConfetti(n=60) {
+  for (let i=0; i<n; i++) {
+    particles.push({
+      x: Math.random()*confCanvas.width,
+      y: -10,
+      vx: (Math.random()-0.5)*6,
+      vy: Math.random()*4+2,
+      r: Math.random()*6+3,
+      color: ['#ffd700','#ff4500','#00ff41','#ff00ff','#00cfff'][Math.floor(Math.random()*5)],
+      rot: Math.random()*360,
+      rotV: (Math.random()-0.5)*10
+    });
+  }
+}
+function drawConfetti() {
+  cctx.clearRect(0,0,confCanvas.width,confCanvas.height);
+  particles = particles.filter(p => p.y < confCanvas.height+20);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.rot += p.rotV;
+    cctx.save();
+    cctx.translate(p.x,p.y); cctx.rotate(p.rot*Math.PI/180);
+    cctx.fillStyle = p.color;
+    cctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*2);
+    cctx.restore();
+  });
+  requestAnimationFrame(drawConfetti);
+}
+drawConfetti();
+
+/* ====== EARNINGS ====== */
+const RATE = 500_000_000;
+const GOAL = 1_000_000_000_000;
+let startTime = Date.now();
+let milestones = [
+  { val: 1e9,   emoji: '🎉', text: '10億突破！！', sub: 'もう普通の人の生涯収入を超えました' },
+  { val: 1e10,  emoji: '🚀', text: '100億突破！！', sub: 'ちょっとした企業の年商です' },
+  { val: 1e11,  emoji: '💎', text: '1000億突破！！', sub: 'もはや国家レベル' },
+  { val: 5e11,  emoji: '👑', text: '5000億突破！！', sub: 'トヨタの売上の1/10' },
+  { val: 1e12,  emoji: '🌍', text: '1兆円達成！！！', sub: '本日の目標完了。AIに感謝。' },
+];
+let shownMilestones = new Set();
+
+const ranks = [
+  [0,       '👑 ランク: 無職からの脱出'],
+  [1e8,     '💼 ランク: 副業成功者'],
+  [1e9,     '🚗 ランク: フェラーリ購入可能'],
+  [1e10,    '🏠 ランク: 六本木ヒルズ住民'],
+  [1e11,    '✈️ ランク: プライベートジェット保有'],
+  [5e11,    '🏝️ ランク: 島を買える'],
+  [1e12,    '🌍 ランク: 国家予算レベル'],
+];
+
+const hypes = [
+  '今すぐ始めれば<span>あなたも</span>この恩恵を受けられます',
+  '<span>眠っている間も</span>AIが稼ぎ続けます',
+  'もうサラリーマンには<span>戻れません</span>',
+  '<span>1秒後</span>にもまた5億増えます',
+  '今この瞬間も<span>ライバルは稼いでいます</span>',
+  'AIは<span>疲れません</span>。休みません。止まりません。',
+  '<span>あなたの上司の年収</span>を1秒で超えました',
+  'もはや<span>宝くじより確実</span>かもしれません（冗談です）',
+];
+
+function fmt(n) {
+  if (n >= 1e12) return '¥' + (n/1e12).toFixed(3) + '兆';
+  if (n >= 1e8)  return '¥' + (n/1e8).toFixed(2) + '億';
+  return '¥' + Math.floor(n).toLocaleString();
+}
+function fmtFull(n) {
+  if (n >= 1e12) return '¥' + (n/1e12).toFixed(4) + '兆';
+  if (n >= 1e8)  return '¥' + (n/1e8).toFixed(4) + '億';
+  return '¥' + Math.floor(n).toLocaleString();
+}
+function fmtTrades(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return n.toString();
+}
+
+/* Log templates */
+const names = ['田中','鈴木','山田','佐藤','中村','加藤','吉田','渡辺','伊藤','小林'];
+const logTpls = [
+  (a) => `[AI] 仮想通貨アービトラージ → <span class="amount">+¥${a}</span> <span class="tag">#CRYPTO</span>`,
+  (a) => `[AI] 高頻度株取引(0.1ms確定) → <span class="amount">+¥${a}</span> <span class="tag">#HFT</span>`,
+  (a) => `[AI] 為替FX自動売買 → <span class="amount">+¥${a}</span> <span class="tag">#FX</span>`,
+  (a) => `[AI] NFTフリップ完了 → <span class="amount">+¥${a}</span> <span class="tag">#NFT</span>`,
+  (a) => `[AI] 深層学習予測的中率100% → <span class="amount">+¥${a}</span> <span class="tag">#ML</span>`,
+  (a) => `[AI] アフィリエイト自動生成×10000記事 → <span class="amount">+¥${a}</span> <span class="tag">#passive</span>`,
+  (a) => `[AI] 量子最適化取引完了 → <span class="big">+¥${a}（大型取引）</span> <span class="tag">#quantum</span>`,
+  (a) => `[AI] グローバル先物ヘッジ → <span class="amount">+¥${a}</span> <span class="tag">#futures</span>`,
+  (a,n) => `✅ ${n}さん AI収益確認 → <span class="amount">+¥${a}</span>`,
+];
+
+/* Popup notifications */
+const popupArea = document.getElementById('popup-area');
+const popupNames = ['田中さん','鈴木さん','山田さん (大阪)','佐藤さん','中村さん (東京)','加藤さん (福岡)','吉田さん','渡辺さん (札幌)'];
+let popupIdx = 0;
+
+function showPopup() {
+  const name = popupNames[popupIdx++ % popupNames.length];
+  const amt = '¥' + (Math.floor(Math.random()*900+100)*100000).toLocaleString();
+  const div = document.createElement('div');
+  div.className = 'popup';
+  div.innerHTML = `🎊 <span class="name">${name}</span> が今<span class="amount">${amt}</span>を受け取りました`;
+  popupArea.appendChild(div);
+  setTimeout(() => div.remove(), 4200);
+}
+
+/* Milestone */
+const msOverlay = document.getElementById('milestone');
+function showMilestone(m) {
+  document.getElementById('ms-emoji').textContent = m.emoji;
+  document.getElementById('ms-text').textContent = m.text;
+  document.getElementById('ms-sub').textContent = m.sub;
+  msOverlay.classList.add('show');
+  spawnConfetti(150);
+  setTimeout(() => msOverlay.classList.remove('show'), 3500);
+}
+
+/* Rank */
+function getrank(n) {
+  let r = ranks[0][1];
+  for (const [v,label] of ranks) { if (n >= v) r = label; }
+  return r;
+}
+
+let lastLog = 0, lastPopup = 0, lastHype = 0, lastFlash = 0, lastViewer = 0;
+let hypeIdx = 0;
+const earningsEl = document.getElementById('earnings');
+const usdEl = document.getElementById('usd-note');
+const tradesEl = document.getElementById('trades');
+const progressEl = document.getElementById('progress');
+const goalPctEl = document.getElementById('goal-pct');
+const logBox = document.getElementById('log-box');
+const rankEl = document.getElementById('rank-badge');
+const viewersEl = document.getElementById('viewers');
+const hypeEl = document.getElementById('hype-msg');
+
+function update() {
+  const now = Date.now();
+  const elapsed = (now - startTime) / 1000;
+  const total = elapsed * RATE;
+  const trades = Math.floor(elapsed * 12000 + elapsed * elapsed * 5);
+
+  earningsEl.textContent = fmtFull(total);
+  usdEl.textContent = '≈ $' + Math.floor(total * 0.0067).toLocaleString() + ' USD';
+  tradesEl.textContent = fmtTrades(trades);
+  rankEl.textContent = getrank(total);
+
+  const pct = Math.min((total / GOAL) * 100, 100);
+  progressEl.style.width = pct + '%';
+  goalPctEl.textContent = pct.toFixed(6) + '%';
+
+  // Milestones
+  milestones.forEach(m => {
+    if (!shownMilestones.has(m.val) && total >= m.val) {
+      shownMilestones.add(m.val);
+      showMilestone(m);
+    }
+  });
+
+  // Log
+  if (now - lastLog > 180) {
+    const a = Math.floor(RATE * 0.18 * (0.3 + Math.random() * 1.4));
+    const tpl = logTpls[Math.floor(Math.random() * logTpls.length)];
+    const n = names[Math.floor(Math.random() * names.length)];
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = tpl('¥' + a.toLocaleString(), n);
+    logBox.insertBefore(line, logBox.firstChild);
+    while (logBox.children.length > 22) logBox.removeChild(logBox.lastChild);
+    lastLog = now;
+  }
+
+  // Popup
+  if (now - lastPopup > 3000 + Math.random() * 4000) {
+    showPopup();
+    lastPopup = now;
+  }
+
+  // Flash
+  if (now - lastFlash > 800) {
+    earningsEl.classList.add('mega-flash');
+    setTimeout(() => earningsEl.classList.remove('mega-flash'), 60);
+    lastFlash = now;
+  }
+
+  // Hype rotation
+  if (now - lastHype > 4000) {
+    hypeEl.innerHTML = hypes[hypeIdx++ % hypes.length];
+    lastHype = now;
+  }
+
+  // Fake viewers
+  if (now - lastViewer > 2000) {
+    const v = 2800 + Math.floor(Math.random() * 300 + elapsed * 0.5);
+    viewersEl.textContent = v.toLocaleString();
+    lastViewer = now;
+  }
+
+  requestAnimationFrame(update);
+}
+
+// Kick off first popup after 2s
+setTimeout(() => { showPopup(); lastPopup = Date.now(); }, 2000);
+update();
+</script>
+</body>
+</html>
